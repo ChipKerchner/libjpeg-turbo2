@@ -50,15 +50,12 @@
 #define DO_FDCT_COMMON_VLEN256(PASS) { \
   z1 = __riscv_vadd_vv_i16mf2(tmp12, tmp13, vl); \
   z1_32 = __riscv_vwmul_vx_i32m1(z1, F_0_541, vl); \
+  z1_32 = __riscv_vadd_vx_i32m1(z1_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   \
-  out2_32 = __riscv_vwmul_vx_i32m1(tmp13, F_0_765, vl); \
-  out2_32 = __riscv_vadd_vv_i32m1(z1_32, out2_32, vl); \
-  out2_32 = __riscv_vadd_vx_i32m1(out2_32, ROUND_ADD(DESCALE_P##PASS), vl); \
+  out2_32 = __riscv_vwmacc_vx_i32m1(z1_32, F_0_765, tmp13, vl); \
   out2 = __riscv_vnsra_wx_i16mf2(out2_32, DESCALE_P##PASS, vl); \
   \
-  out6_32 = __riscv_vwmul_vx_i32m1(tmp12, F_1_847, vl); \
-  out6_32 = __riscv_vsub_vv_i32m1(z1_32, out6_32, vl); \
-  out6_32 = __riscv_vadd_vx_i32m1(out6_32, ROUND_ADD(DESCALE_P##PASS), vl); \
+  out6_32 = __riscv_vwmacc_vx_i32m1(z1_32, -F_1_847, tmp12, vl); \
   out6 = __riscv_vnsra_wx_i16mf2(out6_32, DESCALE_P##PASS, vl); \
   \
   /* Odd part */ \
@@ -68,38 +65,28 @@
   z4 = __riscv_vadd_vv_i16mf2(tmp5, tmp7, vl); \
   z5 = __riscv_vadd_vv_i16mf2(z3, z4, vl); \
   z5_32 = __riscv_vwmul_vx_i32m1(z5, F_1_175, vl); \
-  \
-  tmp4_32 = __riscv_vwmul_vx_i32m1(tmp4, F_0_298, vl); \
-  tmp5_32 = __riscv_vwmul_vx_i32m1(tmp5, F_2_053, vl); \
-  tmp6_32 = __riscv_vwmul_vx_i32m1(tmp6, F_3_072, vl); \
-  tmp7_32 = __riscv_vwmul_vx_i32m1(tmp7, F_1_501, vl); \
+  z5_32 = __riscv_vadd_vx_i32m1(z5_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   \
   z1_32 = __riscv_vwmul_vx_i32m1(z1, -F_0_899, vl); \
   z2_32 = __riscv_vwmul_vx_i32m1(z2, -F_2_562, vl); \
-  z3_32 = __riscv_vwmul_vx_i32m1(z3, -F_1_961, vl); \
-  z4_32 = __riscv_vwmul_vx_i32m1(z4, -F_0_390, vl); \
   \
-  z3_32 = __riscv_vadd_vv_i32m1(z3_32, z5_32, vl); \
-  z4_32 = __riscv_vadd_vv_i32m1(z4_32, z5_32, vl); \
+  z3_32 = __riscv_vwmacc_vx_i32m1(z5_32, -F_1_961, z3, vl); \
+  z4_32 = __riscv_vwmacc_vx_i32m1(z5_32, -F_0_390, z4, vl); \
   \
-  out7_32 = __riscv_vadd_vv_i32m1(tmp4_32, z1_32, vl); \
+  out7_32 = __riscv_vwmacc_vx_i32m1(z1_32, F_0_298, tmp4, vl); \
   out7_32 = __riscv_vadd_vv_i32m1(out7_32, z3_32, vl); \
-  out7_32 = __riscv_vadd_vx_i32m1(out7_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out7 = __riscv_vnsra_wx_i16mf2(out7_32, DESCALE_P##PASS, vl); \
   \
-  out5_32 = __riscv_vadd_vv_i32m1(tmp5_32, z2_32, vl); \
+  out5_32 = __riscv_vwmacc_vx_i32m1(z2_32, F_2_053, tmp5, vl); \
   out5_32 = __riscv_vadd_vv_i32m1(out5_32, z4_32, vl); \
-  out5_32 = __riscv_vadd_vx_i32m1(out5_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out5 = __riscv_vnsra_wx_i16mf2(out5_32, DESCALE_P##PASS, vl); \
   \
-  out3_32 = __riscv_vadd_vv_i32m1(tmp6_32, z2_32, vl); \
+  out3_32 = __riscv_vwmacc_vx_i32m1(z2_32, F_3_072, tmp6, vl); \
   out3_32 = __riscv_vadd_vv_i32m1(out3_32, z3_32, vl); \
-  out3_32 = __riscv_vadd_vx_i32m1(out3_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out3 = __riscv_vnsra_wx_i16mf2(out3_32, DESCALE_P##PASS, vl); \
   \
-  out1_32 = __riscv_vadd_vv_i32m1(tmp7_32, z1_32, vl); \
+  out1_32 = __riscv_vwmacc_vx_i32m1(z1_32, F_1_501, tmp7, vl); \
   out1_32 = __riscv_vadd_vv_i32m1(out1_32, z4_32, vl); \
-  out1_32 = __riscv_vadd_vx_i32m1(out1_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out1 = __riscv_vnsra_wx_i16mf2(out1_32, DESCALE_P##PASS, vl); \
 }
 
@@ -111,8 +98,7 @@ static void jsimd_fdct_islow_rvv_vlen256(DCTELEM *data)
     tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp10, tmp11, tmp12, tmp13,
     z1, z2, z3, z4, z5,
     out0, out1, out2, out3, out4, out5, out6, out7;
-  vint32m1_t tmp4_32, tmp5_32, tmp6_32, tmp7_32,
-    z1_32, z2_32, z3_32, z4_32, z5_32,
+  vint32m1_t z1_32, z2_32, z3_32, z4_32, z5_32,
     out1_32, out2_32, out3_32, out5_32, out6_32, out7_32;
 
   /* VLEN >= 256, so this should always be 8. */
@@ -120,6 +106,7 @@ static void jsimd_fdct_islow_rvv_vlen256(DCTELEM *data)
 
   /* Pass 1: process rows */
 
+#if 0
   /* Load row vectors. */
   row0 = __riscv_vle16_v_i16mf2(data + 0 * DCTSIZE, vl);
   row1 = __riscv_vle16_v_i16mf2(data + 1 * DCTSIZE, vl);
@@ -132,6 +119,19 @@ static void jsimd_fdct_islow_rvv_vlen256(DCTELEM *data)
 
   /* Transpose row vectors to column vectors. */
   TRANSPOSE_8x8_VLEN256(row, col);
+#else
+  /* Load and transpose row vectors to column vectors. */
+  vint16mf2x8_t rows;
+  rows = __riscv_vlseg8e16_v_i16mf2x8(data, vl);
+  col0 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 0);
+  col1 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 1);
+  col2 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 2);
+  col3 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 3);
+  col4 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 4);
+  col5 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 5);
+  col6 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 6);
+  col7 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 7);
+#endif
 
   tmp0 = __riscv_vadd_vv_i16mf2(col0, col7, vl);
   tmp7 = __riscv_vsub_vv_i16mf2(col0, col7, vl);
@@ -174,12 +174,11 @@ static void jsimd_fdct_islow_rvv_vlen256(DCTELEM *data)
   tmp13 = __riscv_vsub_vv_i16mf2(tmp0, tmp3, vl);
   tmp11 = __riscv_vadd_vv_i16mf2(tmp1, tmp2, vl);
   tmp12 = __riscv_vsub_vv_i16mf2(tmp1, tmp2, vl);
+  tmp10 = __riscv_vadd_vx_i16mf2(tmp10, ROUND_ADD(PASS1_BITS), vl);
 
   out0 = __riscv_vadd_vv_i16mf2(tmp10, tmp11, vl);
-  out0 = __riscv_vadd_vx_i16mf2(out0, ROUND_ADD(PASS1_BITS), vl);
   out0 = __riscv_vsra_vx_i16mf2(out0, PASS1_BITS, vl);
   out4 = __riscv_vsub_vv_i16mf2(tmp10, tmp11, vl);
-  out4 = __riscv_vadd_vx_i16mf2(out4, ROUND_ADD(PASS1_BITS), vl);
   out4 = __riscv_vsra_vx_i16mf2(out4, PASS1_BITS, vl);
 
   DO_FDCT_COMMON_VLEN256(2);
@@ -199,15 +198,12 @@ static void jsimd_fdct_islow_rvv_vlen256(DCTELEM *data)
 #define DO_FDCT_COMMON(PASS) { \
   z1 = __riscv_vadd_vv_i16m1(tmp12, tmp13, vl); \
   z1_32 = __riscv_vwmul_vx_i32m2(z1, F_0_541, vl); \
+  z1_32 = __riscv_vadd_vx_i32m2(z1_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   \
-  out2_32 = __riscv_vwmul_vx_i32m2(tmp13, F_0_765, vl); \
-  out2_32 = __riscv_vadd_vv_i32m2(z1_32, out2_32, vl); \
-  out2_32 = __riscv_vadd_vx_i32m2(out2_32, ROUND_ADD(DESCALE_P##PASS), vl); \
+  out2_32 = __riscv_vwmacc_vx_i32m2(z1_32, F_0_765, tmp13, vl); \
   out2 = __riscv_vnsra_wx_i16m1(out2_32, DESCALE_P##PASS, vl); \
   \
-  out6_32 = __riscv_vwmul_vx_i32m2(tmp12, F_1_847, vl); \
-  out6_32 = __riscv_vsub_vv_i32m2(z1_32, out6_32, vl); \
-  out6_32 = __riscv_vadd_vx_i32m2(out6_32, ROUND_ADD(DESCALE_P##PASS), vl); \
+  out6_32 = __riscv_vwmacc_vx_i32m2(z1_32, -F_1_847, tmp12, vl); \
   out6 = __riscv_vnsra_wx_i16m1(out6_32, DESCALE_P##PASS, vl); \
   \
   /* Odd part */ \
@@ -217,38 +213,28 @@ static void jsimd_fdct_islow_rvv_vlen256(DCTELEM *data)
   z4 = __riscv_vadd_vv_i16m1(tmp5, tmp7, vl); \
   z5 = __riscv_vadd_vv_i16m1(z3, z4, vl); \
   z5_32 = __riscv_vwmul_vx_i32m2(z5, F_1_175, vl); \
-  \
-  tmp4_32 = __riscv_vwmul_vx_i32m2(tmp4, F_0_298, vl); \
-  tmp5_32 = __riscv_vwmul_vx_i32m2(tmp5, F_2_053, vl); \
-  tmp6_32 = __riscv_vwmul_vx_i32m2(tmp6, F_3_072, vl); \
-  tmp7_32 = __riscv_vwmul_vx_i32m2(tmp7, F_1_501, vl); \
+  z5_32 = __riscv_vadd_vx_i32m2(z5_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   \
   z1_32 = __riscv_vwmul_vx_i32m2(z1, -F_0_899, vl); \
   z2_32 = __riscv_vwmul_vx_i32m2(z2, -F_2_562, vl); \
-  z3_32 = __riscv_vwmul_vx_i32m2(z3, -F_1_961, vl); \
-  z4_32 = __riscv_vwmul_vx_i32m2(z4, -F_0_390, vl); \
   \
-  z3_32 = __riscv_vadd_vv_i32m2(z3_32, z5_32, vl); \
-  z4_32 = __riscv_vadd_vv_i32m2(z4_32, z5_32, vl); \
+  z3_32 = __riscv_vwmacc_vx_i32m2(z5_32, -F_1_961, z3, vl); \
+  z4_32 = __riscv_vwmacc_vx_i32m2(z5_32, -F_0_390, z4, vl); \
   \
-  out7_32 = __riscv_vadd_vv_i32m2(tmp4_32, z1_32, vl); \
+  out7_32 = __riscv_vwmacc_vx_i32m2(z1_32, F_0_298, tmp4, vl); \
   out7_32 = __riscv_vadd_vv_i32m2(out7_32, z3_32, vl); \
-  out7_32 = __riscv_vadd_vx_i32m2(out7_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out7 = __riscv_vnsra_wx_i16m1(out7_32, DESCALE_P##PASS, vl); \
   \
-  out5_32 = __riscv_vadd_vv_i32m2(tmp5_32, z2_32, vl); \
+  out5_32 = __riscv_vwmacc_vx_i32m2(z2_32, F_2_053, tmp5, vl); \
   out5_32 = __riscv_vadd_vv_i32m2(out5_32, z4_32, vl); \
-  out5_32 = __riscv_vadd_vx_i32m2(out5_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out5 = __riscv_vnsra_wx_i16m1(out5_32, DESCALE_P##PASS, vl); \
   \
-  out3_32 = __riscv_vadd_vv_i32m2(tmp6_32, z2_32, vl); \
+  out3_32 = __riscv_vwmacc_vx_i32m2(z2_32, F_3_072, tmp6, vl); \
   out3_32 = __riscv_vadd_vv_i32m2(out3_32, z3_32, vl); \
-  out3_32 = __riscv_vadd_vx_i32m2(out3_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out3 = __riscv_vnsra_wx_i16m1(out3_32, DESCALE_P##PASS, vl); \
   \
-  out1_32 = __riscv_vadd_vv_i32m2(tmp7_32, z1_32, vl); \
+  out1_32 = __riscv_vwmacc_vx_i32m2(z1_32, F_1_501, tmp7, vl); \
   out1_32 = __riscv_vadd_vv_i32m2(out1_32, z4_32, vl); \
-  out1_32 = __riscv_vadd_vx_i32m2(out1_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out1 = __riscv_vnsra_wx_i16m1(out1_32, DESCALE_P##PASS, vl); \
 }
 
@@ -261,8 +247,7 @@ jsimd_fdct_islow_rvv(DCTELEM *data)
     tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp10, tmp11, tmp12, tmp13,
     z1, z2, z3, z4, z5,
     out0, out1, out2, out3, out4, out5, out6, out7;
-  vint32m2_t tmp4_32, tmp5_32, tmp6_32, tmp7_32,
-    z1_32, z2_32, z3_32, z4_32, z5_32,
+  vint32m2_t z1_32, z2_32, z3_32, z4_32, z5_32,
     out1_32, out2_32, out3_32, out5_32, out6_32, out7_32;
   size_t vl;
 
@@ -278,6 +263,7 @@ jsimd_fdct_islow_rvv(DCTELEM *data)
 
   /* Pass 1: process rows */
 
+#if 0
   /* Load row vectors. */
   row0 = __riscv_vle16_v_i16m1(data + 0 * DCTSIZE, vl);
   row1 = __riscv_vle16_v_i16m1(data + 1 * DCTSIZE, vl);
@@ -290,6 +276,19 @@ jsimd_fdct_islow_rvv(DCTELEM *data)
 
   /* Transpose row vectors to column vectors. */
   TRANSPOSE_8x8(row, col);
+#else
+  /* Load and transpose row vectors to column vectors. */
+  vint16m1x8_t rows;
+  rows = __riscv_vlseg8e16_v_i16m1x8(data, vl);
+  col0 = __riscv_vget_v_i16m1x8_i16m1(rows, 0);
+  col1 = __riscv_vget_v_i16m1x8_i16m1(rows, 1);
+  col2 = __riscv_vget_v_i16m1x8_i16m1(rows, 2);
+  col3 = __riscv_vget_v_i16m1x8_i16m1(rows, 3);
+  col4 = __riscv_vget_v_i16m1x8_i16m1(rows, 4);
+  col5 = __riscv_vget_v_i16m1x8_i16m1(rows, 5);
+  col6 = __riscv_vget_v_i16m1x8_i16m1(rows, 6);
+  col7 = __riscv_vget_v_i16m1x8_i16m1(rows, 7);
+#endif
 
   tmp0 = __riscv_vadd_vv_i16m1(col0, col7, vl);
   tmp7 = __riscv_vsub_vv_i16m1(col0, col7, vl);
@@ -332,12 +331,11 @@ jsimd_fdct_islow_rvv(DCTELEM *data)
   tmp13 = __riscv_vsub_vv_i16m1(tmp0, tmp3, vl);
   tmp11 = __riscv_vadd_vv_i16m1(tmp1, tmp2, vl);
   tmp12 = __riscv_vsub_vv_i16m1(tmp1, tmp2, vl);
+  tmp10 = __riscv_vadd_vx_i16m1(tmp10, ROUND_ADD(PASS1_BITS), vl);
 
   out0 = __riscv_vadd_vv_i16m1(tmp10, tmp11, vl);
-  out0 = __riscv_vadd_vx_i16m1(out0, ROUND_ADD(PASS1_BITS), vl);
   out0 = __riscv_vsra_vx_i16m1(out0, PASS1_BITS, vl);
   out4 = __riscv_vsub_vv_i16m1(tmp10, tmp11, vl);
-  out4 = __riscv_vadd_vx_i16m1(out4, ROUND_ADD(PASS1_BITS), vl);
   out4 = __riscv_vsra_vx_i16m1(out4, PASS1_BITS, vl);
 
   DO_FDCT_COMMON(2);

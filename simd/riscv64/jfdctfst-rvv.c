@@ -95,6 +95,7 @@ static void jsimd_fdct_ifast_rvv_vlen256(DCTELEM *data)
 
   /* Pass 1: process rows */
 
+#if 0
   /* Load row vectors. */
   row0 = __riscv_vle16_v_i16mf2(data + 0 * DCTSIZE, vl);
   row1 = __riscv_vle16_v_i16mf2(data + 1 * DCTSIZE, vl);
@@ -107,6 +108,19 @@ static void jsimd_fdct_ifast_rvv_vlen256(DCTELEM *data)
 
   /* Transpose row vectors to column vectors. */
   TRANSPOSE_8x8_VLEN256(row, col);
+#else
+  /* Load and transpose row vectors to column vectors. */
+  vint16mf2x8_t rows;
+  rows = __riscv_vlseg8e16_v_i16mf2x8(data, vl);
+  col0 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 0);
+  col1 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 1);
+  col2 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 2);
+  col3 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 3);
+  col4 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 4);
+  col5 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 5);
+  col6 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 6);
+  col7 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 7);
+#endif
 
   tmp0 = __riscv_vadd_vv_i16mf2(col0, col7, vl);
   tmp7 = __riscv_vsub_vv_i16mf2(col0, col7, vl);
@@ -214,6 +228,7 @@ jsimd_fdct_ifast_rvv(DCTELEM *data)
 
   /* Pass 1: process rows */
 
+#if 0
   /* Load row vectors. */
   row0 = __riscv_vle16_v_i16m1(data + 0 * DCTSIZE, vl);
   row1 = __riscv_vle16_v_i16m1(data + 1 * DCTSIZE, vl);
@@ -226,6 +241,19 @@ jsimd_fdct_ifast_rvv(DCTELEM *data)
 
   /* Transpose row vectors to column vectors. */
   TRANSPOSE_8x8(row, col);
+#else
+  /* Load and transpose row vectors to column vectors. */
+  vint16m1x8_t rows;
+  rows = __riscv_vlseg8e16_v_i16m1x8(data, vl);
+  col0 = __riscv_vget_v_i16m1x8_i16m1(rows, 0);
+  col1 = __riscv_vget_v_i16m1x8_i16m1(rows, 1);
+  col2 = __riscv_vget_v_i16m1x8_i16m1(rows, 2);
+  col3 = __riscv_vget_v_i16m1x8_i16m1(rows, 3);
+  col4 = __riscv_vget_v_i16m1x8_i16m1(rows, 4);
+  col5 = __riscv_vget_v_i16m1x8_i16m1(rows, 5);
+  col6 = __riscv_vget_v_i16m1x8_i16m1(rows, 6);
+  col7 = __riscv_vget_v_i16m1x8_i16m1(rows, 7);
+#endif
 
   tmp0 = __riscv_vadd_vv_i16m1(col0, col7, vl);
   tmp7 = __riscv_vsub_vv_i16m1(col0, col7, vl);

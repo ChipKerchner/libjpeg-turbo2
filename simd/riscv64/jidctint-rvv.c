@@ -62,8 +62,10 @@
   \
   tmp0 = __riscv_vwadd_vv_i32m1(in##0, in##4, vl); \
   tmp0 = __riscv_vsll_vx_i32m1(tmp0, CONST_BITS, vl); \
+  tmp0 = __riscv_vadd_vx_i32m1(tmp0, ROUND_ADD(DESCALE_P##PASS), vl); \
   tmp1 = __riscv_vwsub_vv_i32m1(in##0, in##4, vl); \
   tmp1 = __riscv_vsll_vx_i32m1(tmp1, CONST_BITS, vl); \
+  tmp1 = __riscv_vadd_vx_i32m1(tmp1, ROUND_ADD(DESCALE_P##PASS), vl); \
   \
   tmp10 = __riscv_vadd_vv_i32m1(tmp0, tmp3, vl); \
   tmp13 = __riscv_vsub_vv_i32m1(tmp0, tmp3, vl); \
@@ -84,11 +86,9 @@
   tmp3 = __riscv_vwmul_vx_i32m1(in##1, F_1_501, vl); \
   z1 = __riscv_vmul_vx_i32m1(z1, -F_0_899, vl); \
   z2 = __riscv_vmul_vx_i32m1(z2, -F_2_562, vl); \
-  z3 = __riscv_vmul_vx_i32m1(z3, -F_1_961, vl); \
-  z4 = __riscv_vmul_vx_i32m1(z4, -F_0_390, vl); \
   \
-  z3 = __riscv_vadd_vv_i32m1(z3, z5, vl); \
-  z4 = __riscv_vadd_vv_i32m1(z4, z5, vl); \
+  z3 = __riscv_vmacc_vx_i32m1(z5, -F_1_961, z3, vl); \
+  z4 = __riscv_vmacc_vx_i32m1(z5, -F_0_390, z4, vl); \
   \
   tmp0 = __riscv_vadd_vv_i32m1(tmp0, z1, vl); \
   tmp0 = __riscv_vadd_vv_i32m1(tmp0, z3, vl); \
@@ -100,35 +100,27 @@
   tmp3 = __riscv_vadd_vv_i32m1(tmp3, z4, vl); \
   \
   out0_32 = __riscv_vadd_vv_i32m1(tmp10, tmp3, vl); \
-  out0_32 = __riscv_vadd_vx_i32m1(out0_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out0 = __riscv_vnsra_wx_i16mf2(out0_32, DESCALE_P##PASS, vl); \
   \
   out7_32 = __riscv_vsub_vv_i32m1(tmp10, tmp3, vl); \
-  out7_32 = __riscv_vadd_vx_i32m1(out7_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out7 = __riscv_vnsra_wx_i16mf2(out7_32, DESCALE_P##PASS, vl); \
   \
   out1_32 = __riscv_vadd_vv_i32m1(tmp11, tmp2, vl); \
-  out1_32 = __riscv_vadd_vx_i32m1(out1_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out1 = __riscv_vnsra_wx_i16mf2(out1_32, DESCALE_P##PASS, vl); \
   \
   out6_32 = __riscv_vsub_vv_i32m1(tmp11, tmp2, vl); \
-  out6_32 = __riscv_vadd_vx_i32m1(out6_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out6 = __riscv_vnsra_wx_i16mf2(out6_32, DESCALE_P##PASS, vl); \
   \
   out2_32 = __riscv_vadd_vv_i32m1(tmp12, tmp1, vl); \
-  out2_32 = __riscv_vadd_vx_i32m1(out2_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out2 = __riscv_vnsra_wx_i16mf2(out2_32, DESCALE_P##PASS, vl); \
   \
   out5_32 = __riscv_vsub_vv_i32m1(tmp12, tmp1, vl); \
-  out5_32 = __riscv_vadd_vx_i32m1(out5_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out5 = __riscv_vnsra_wx_i16mf2(out5_32, DESCALE_P##PASS, vl); \
   \
   out3_32 = __riscv_vadd_vv_i32m1(tmp13, tmp0, vl); \
-  out3_32 = __riscv_vadd_vx_i32m1(out3_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out3 = __riscv_vnsra_wx_i16mf2(out3_32, DESCALE_P##PASS, vl); \
   \
   out4_32 = __riscv_vsub_vv_i32m1(tmp13, tmp0, vl); \
-  out4_32 = __riscv_vadd_vx_i32m1(out4_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out4 = __riscv_vnsra_wx_i16mf2(out4_32, DESCALE_P##PASS, vl); \
 }
 
@@ -194,6 +186,33 @@ static void jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
   /* Transpose column vectors back to row vectors. */
   TRANSPOSE_8x8_VLEN256(out, out);
 
+#if (CENTERJSAMPLE == 128) && (MAXJSAMPLE == 255)
+   dst0 =
+     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out0, 0, __RISCV_VXRM_RDN, vl));
+   dst1 =
+     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out1, 0, __RISCV_VXRM_RDN, vl));
+   dst2 =
+     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out2, 0, __RISCV_VXRM_RDN, vl));
+   dst3 =
+     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out3, 0, __RISCV_VXRM_RDN, vl));
+   dst4 =
+     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out4, 0, __RISCV_VXRM_RDN, vl));
+   dst5 =
+     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out5, 0, __RISCV_VXRM_RDN, vl));
+   dst6 =
+     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out6, 0, __RISCV_VXRM_RDN, vl));
+   dst7 =
+     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out7, 0, __RISCV_VXRM_RDN, vl));
+
+   dst0 = __riscv_vadd_vx_u8mf4(dst0, (uint8_t)(CENTERJSAMPLE), vl);
+   dst1 = __riscv_vadd_vx_u8mf4(dst1, (uint8_t)(CENTERJSAMPLE), vl);
+   dst2 = __riscv_vadd_vx_u8mf4(dst2, (uint8_t)(CENTERJSAMPLE), vl);
+   dst3 = __riscv_vadd_vx_u8mf4(dst3, (uint8_t)(CENTERJSAMPLE), vl);
+   dst4 = __riscv_vadd_vx_u8mf4(dst4, (uint8_t)(CENTERJSAMPLE), vl);
+   dst5 = __riscv_vadd_vx_u8mf4(dst5, (uint8_t)(CENTERJSAMPLE), vl);
+   dst6 = __riscv_vadd_vx_u8mf4(dst6, (uint8_t)(CENTERJSAMPLE), vl);
+   dst7 = __riscv_vadd_vx_u8mf4(dst7, (uint8_t)(CENTERJSAMPLE), vl);
+#else
   out0 = __riscv_vadd_vx_i16mf2(out0, CENTERJSAMPLE, vl);
   out0  = __riscv_vmax_vx_i16mf2(out0, 0, vl);
   out0 = __riscv_vmin_vx_i16mf2(out0, MAXJSAMPLE, vl);
@@ -242,6 +261,7 @@ static void jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnsra_wx_i8mf4(out6, 0, vl));
   dst7 =
     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnsra_wx_i8mf4(out7, 0, vl));
+#endif
 
   __riscv_vse8_v_u8mf4(output_buf[0] + output_col, dst0, vl);
   __riscv_vse8_v_u8mf4(output_buf[1] + output_col, dst1, vl);
@@ -263,8 +283,10 @@ static void jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
   \
   tmp0 = __riscv_vwadd_vv_i32m2(in##0, in##4, vl); \
   tmp0 = __riscv_vsll_vx_i32m2(tmp0, CONST_BITS, vl); \
+  tmp0 = __riscv_vadd_vx_i32m2(tmp0, ROUND_ADD(DESCALE_P##PASS), vl); \
   tmp1 = __riscv_vwsub_vv_i32m2(in##0, in##4, vl); \
   tmp1 = __riscv_vsll_vx_i32m2(tmp1, CONST_BITS, vl); \
+  tmp1 = __riscv_vadd_vx_i32m2(tmp1, ROUND_ADD(DESCALE_P##PASS), vl); \
   \
   tmp10 = __riscv_vadd_vv_i32m2(tmp0, tmp3, vl); \
   tmp13 = __riscv_vsub_vv_i32m2(tmp0, tmp3, vl); \
@@ -285,11 +307,9 @@ static void jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
   tmp3 = __riscv_vwmul_vx_i32m2(in##1, F_1_501, vl); \
   z1 = __riscv_vmul_vx_i32m2(z1, -F_0_899, vl); \
   z2 = __riscv_vmul_vx_i32m2(z2, -F_2_562, vl); \
-  z3 = __riscv_vmul_vx_i32m2(z3, -F_1_961, vl); \
-  z4 = __riscv_vmul_vx_i32m2(z4, -F_0_390, vl); \
   \
-  z3 = __riscv_vadd_vv_i32m2(z3, z5, vl); \
-  z4 = __riscv_vadd_vv_i32m2(z4, z5, vl); \
+  z3 = __riscv_vmacc_vx_i32m2(z5, -F_1_961, z3, vl); \
+  z4 = __riscv_vmacc_vx_i32m2(z5, -F_0_390, z4, vl); \
   \
   tmp0 = __riscv_vadd_vv_i32m2(tmp0, z1, vl); \
   tmp0 = __riscv_vadd_vv_i32m2(tmp0, z3, vl); \
@@ -301,35 +321,27 @@ static void jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
   tmp3 = __riscv_vadd_vv_i32m2(tmp3, z4, vl); \
   \
   out0_32 = __riscv_vadd_vv_i32m2(tmp10, tmp3, vl); \
-  out0_32 = __riscv_vadd_vx_i32m2(out0_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out0 = __riscv_vnsra_wx_i16m1(out0_32, DESCALE_P##PASS, vl); \
   \
   out7_32 = __riscv_vsub_vv_i32m2(tmp10, tmp3, vl); \
-  out7_32 = __riscv_vadd_vx_i32m2(out7_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out7 = __riscv_vnsra_wx_i16m1(out7_32, DESCALE_P##PASS, vl); \
   \
   out1_32 = __riscv_vadd_vv_i32m2(tmp11, tmp2, vl); \
-  out1_32 = __riscv_vadd_vx_i32m2(out1_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out1 = __riscv_vnsra_wx_i16m1(out1_32, DESCALE_P##PASS, vl); \
   \
   out6_32 = __riscv_vsub_vv_i32m2(tmp11, tmp2, vl); \
-  out6_32 = __riscv_vadd_vx_i32m2(out6_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out6 = __riscv_vnsra_wx_i16m1(out6_32, DESCALE_P##PASS, vl); \
   \
   out2_32 = __riscv_vadd_vv_i32m2(tmp12, tmp1, vl); \
-  out2_32 = __riscv_vadd_vx_i32m2(out2_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out2 = __riscv_vnsra_wx_i16m1(out2_32, DESCALE_P##PASS, vl); \
   \
   out5_32 = __riscv_vsub_vv_i32m2(tmp12, tmp1, vl); \
-  out5_32 = __riscv_vadd_vx_i32m2(out5_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out5 = __riscv_vnsra_wx_i16m1(out5_32, DESCALE_P##PASS, vl); \
   \
   out3_32 = __riscv_vadd_vv_i32m2(tmp13, tmp0, vl); \
-  out3_32 = __riscv_vadd_vx_i32m2(out3_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out3 = __riscv_vnsra_wx_i16m1(out3_32, DESCALE_P##PASS, vl); \
   \
   out4_32 = __riscv_vsub_vv_i32m2(tmp13, tmp0, vl); \
-  out4_32 = __riscv_vadd_vx_i32m2(out4_32, ROUND_ADD(DESCALE_P##PASS), vl); \
   out4 = __riscv_vnsra_wx_i16m1(out4_32, DESCALE_P##PASS, vl); \
 }
 
@@ -404,6 +416,33 @@ jsimd_idct_islow_rvv(void *dct_table, JCOEFPTR coef_block,
   /* Transpose column vectors back to row vectors. */
   TRANSPOSE_8x8(out, out);
 
+#if (CENTERJSAMPLE == 128) && (MAXJSAMPLE == 255)
+   dst0 =
+     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out0, 0, __RISCV_VXRM_RDN, vl));
+   dst1 =
+     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out1, 0, __RISCV_VXRM_RDN, vl));
+   dst2 =
+     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out2, 0, __RISCV_VXRM_RDN, vl));
+   dst3 =
+     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out3, 0, __RISCV_VXRM_RDN, vl));
+   dst4 =
+     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out4, 0, __RISCV_VXRM_RDN, vl));
+   dst5 =
+     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out5, 0, __RISCV_VXRM_RDN, vl));
+   dst6 =
+     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out6, 0, __RISCV_VXRM_RDN, vl));
+   dst7 =
+     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out7, 0, __RISCV_VXRM_RDN, vl));
+
+   dst0 = __riscv_vadd_vx_u8mf2(dst0, (uint8_t)(CENTERJSAMPLE), vl);
+   dst1 = __riscv_vadd_vx_u8mf2(dst1, (uint8_t)(CENTERJSAMPLE), vl);
+   dst2 = __riscv_vadd_vx_u8mf2(dst2, (uint8_t)(CENTERJSAMPLE), vl);
+   dst3 = __riscv_vadd_vx_u8mf2(dst3, (uint8_t)(CENTERJSAMPLE), vl);
+   dst4 = __riscv_vadd_vx_u8mf2(dst4, (uint8_t)(CENTERJSAMPLE), vl);
+   dst5 = __riscv_vadd_vx_u8mf2(dst5, (uint8_t)(CENTERJSAMPLE), vl);
+   dst6 = __riscv_vadd_vx_u8mf2(dst6, (uint8_t)(CENTERJSAMPLE), vl);
+   dst7 = __riscv_vadd_vx_u8mf2(dst7, (uint8_t)(CENTERJSAMPLE), vl);
+#else
   out0 = __riscv_vadd_vx_i16m1(out0, CENTERJSAMPLE, vl);
   out0  = __riscv_vmax_vx_i16m1(out0, 0, vl);
   out0 = __riscv_vmin_vx_i16m1(out0, MAXJSAMPLE, vl);
@@ -452,6 +491,7 @@ jsimd_idct_islow_rvv(void *dct_table, JCOEFPTR coef_block,
     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnsra_wx_i8mf2(out6, 0, vl));
   dst7 =
     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnsra_wx_i8mf2(out7, 0, vl));
+#endif
 
   __riscv_vse8_v_u8mf2(output_buf[0] + output_col, dst0, vl);
   __riscv_vse8_v_u8mf2(output_buf[1] + output_col, dst1, vl);
