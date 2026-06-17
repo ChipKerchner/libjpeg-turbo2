@@ -110,16 +110,17 @@ static void jsimd_fdct_ifast_rvv_vlen256(DCTELEM *data)
   TRANSPOSE_8x8_VLEN256(row, col);
 #else
   /* Load and transpose row vectors to column vectors. */
-  vint16mf2x8_t rows;
-  rows = __riscv_vlseg8e16_v_i16mf2x8(data, vl);
-  col0 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 0);
-  col1 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 1);
-  col2 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 2);
-  col3 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 3);
-  col4 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 4);
-  col5 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 5);
-  col6 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 6);
-  col7 = __riscv_vget_v_i16mf2x8_i16mf2(rows, 7);
+  vint16mf2x4_t rows0, rows1;
+  rows0 = __riscv_vlsseg4e16_v_i16mf2x4(data + 0, 8 * sizeof(int16_t), vl);
+  rows1 = __riscv_vlsseg4e16_v_i16mf2x4(data + 4, 8 * sizeof(int16_t), vl);
+  col0 = __riscv_vget_v_i16mf2x4_i16mf2(rows0, 0);
+  col1 = __riscv_vget_v_i16mf2x4_i16mf2(rows0, 1);
+  col2 = __riscv_vget_v_i16mf2x4_i16mf2(rows0, 2);
+  col3 = __riscv_vget_v_i16mf2x4_i16mf2(rows0, 3);
+  col4 = __riscv_vget_v_i16mf2x4_i16mf2(rows1, 0);
+  col5 = __riscv_vget_v_i16mf2x4_i16mf2(rows1, 1);
+  col6 = __riscv_vget_v_i16mf2x4_i16mf2(rows1, 2);
+  col7 = __riscv_vget_v_i16mf2x4_i16mf2(rows1, 3);
 #endif
 
   tmp0 = __riscv_vadd_vv_i16mf2(col0, col7, vl);
@@ -243,16 +244,17 @@ jsimd_fdct_ifast_rvv(DCTELEM *data)
   TRANSPOSE_8x8(row, col);
 #else
   /* Load and transpose row vectors to column vectors. */
-  vint16m1x8_t rows;
-  rows = __riscv_vlseg8e16_v_i16m1x8(data, vl);
-  col0 = __riscv_vget_v_i16m1x8_i16m1(rows, 0);
-  col1 = __riscv_vget_v_i16m1x8_i16m1(rows, 1);
-  col2 = __riscv_vget_v_i16m1x8_i16m1(rows, 2);
-  col3 = __riscv_vget_v_i16m1x8_i16m1(rows, 3);
-  col4 = __riscv_vget_v_i16m1x8_i16m1(rows, 4);
-  col5 = __riscv_vget_v_i16m1x8_i16m1(rows, 5);
-  col6 = __riscv_vget_v_i16m1x8_i16m1(rows, 6);
-  col7 = __riscv_vget_v_i16m1x8_i16m1(rows, 7);
+  vint16m1x4_t rows0, rows1;
+  rows0 = __riscv_vlsseg4e16_v_i16m1x4(data + 0, 8 * sizeof(int16_t), vl);
+  rows1 = __riscv_vlsseg4e16_v_i16m1x4(data + 4, 8 * sizeof(int16_t), vl);
+  col0 = __riscv_vget_v_i16m1x4_i16m1(rows0, 0);
+  col1 = __riscv_vget_v_i16m1x4_i16m1(rows0, 1);
+  col2 = __riscv_vget_v_i16m1x4_i16m1(rows0, 2);
+  col3 = __riscv_vget_v_i16m1x4_i16m1(rows0, 3);
+  col4 = __riscv_vget_v_i16m1x4_i16m1(rows1, 0);
+  col5 = __riscv_vget_v_i16m1x4_i16m1(rows1, 1);
+  col6 = __riscv_vget_v_i16m1x4_i16m1(rows1, 2);
+  col7 = __riscv_vget_v_i16m1x4_i16m1(rows1, 3);
 #endif
 
   tmp0 = __riscv_vadd_vv_i16m1(col0, col7, vl);
