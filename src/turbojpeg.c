@@ -1015,7 +1015,8 @@ DLLEXPORT unsigned long TJBUFSIZE(int width, int height)
   /* This allows for rare corner cases in which a JPEG image can actually be
      larger than the uncompressed input (we wouldn't mention it if it hadn't
      happened before.) */
-  retval = PAD(width, 16) * PAD(height, 16) * 6ULL + 2048ULL;
+  retval = (unsigned long long)PAD(width, 16) * PAD(height, 16) * 6ULL +
+           2048ULL;
 #if ULLONG_MAX > ULONG_MAX
   if (retval > (unsigned long long)((unsigned long)-1))
     THROWG("Image is too large", (unsigned long)-1);
@@ -1037,13 +1038,14 @@ DLLEXPORT size_t tj3YUVBufSize(int width, int align, int height, int subsamp)
     THROWG("Invalid argument", 0);
 
   nc = (subsamp == TJSAMP_GRAY ? 1 : 3);
+
   for (i = 0; i < nc; i++) {
     int pw = tj3YUVPlaneWidth(i, width, subsamp);
-    int stride = PAD(pw, align);
+    unsigned long long stride = PAD((unsigned long long)pw, align);
     int ph = tj3YUVPlaneHeight(i, height, subsamp);
 
     if (pw == 0 || ph == 0) return 0;
-    else retval += (unsigned long long)stride * ph;
+    else retval += stride * ph;
   }
 #if ULLONG_MAX > ULONG_MAX
   if (retval > (unsigned long long)((unsigned long)-1))
@@ -1372,6 +1374,8 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
     ih = compptr->height_in_blocks * DCTSIZE;
     pw[i] = PAD(cinfo->image_width, cinfo->max_h_samp_factor) *
             compptr->h_samp_factor / cinfo->max_h_samp_factor;
+    if (strides && strides[i] != 0 && strides[i] < pw[i])
+      THROW("Invalid argument");
     ph[i] = PAD(cinfo->image_height, cinfo->max_v_samp_factor) *
             compptr->v_samp_factor / cinfo->max_v_samp_factor;
     if (iw[i] != pw[i] || ih != ph[i]) usetmpbuf = 1;
@@ -1501,7 +1505,7 @@ DLLEXPORT int tj3CompressFromYUV8(tjhandle handle,
   pw0 = tj3YUVPlaneWidth(0, width, this->subsamp);
   ph0 = tj3YUVPlaneHeight(0, height, this->subsamp);
   srcPlanes[0] = srcBuf;
-  strides[0] = PAD(pw0, align);
+  strides[0] = (int)PAD((unsigned long long)pw0, align);
   if (this->subsamp == TJSAMP_GRAY) {
     strides[1] = strides[2] = 0;
     srcPlanes[1] = srcPlanes[2] = NULL;
@@ -1509,7 +1513,7 @@ DLLEXPORT int tj3CompressFromYUV8(tjhandle handle,
     int pw1 = tjPlaneWidth(1, width, this->subsamp);
     int ph1 = tjPlaneHeight(1, height, this->subsamp);
 
-    strides[1] = strides[2] = PAD(pw1, align);
+    strides[1] = strides[2] = (int)PAD((unsigned long long)pw1, align);
     if ((unsigned long long)strides[0] * (unsigned long long)ph0 >
         (unsigned long long)INT_MAX ||
         (unsigned long long)strides[1] * (unsigned long long)ph1 >
@@ -1669,6 +1673,8 @@ DLLEXPORT int tj3EncodeYUVPlanes8(tjhandle handle, const unsigned char *srcBuf,
         &_tmpbuf2_aligned[PAD(compptr->width_in_blocks * DCTSIZE, 32) * row];
     }
     pw[i] = pw0 * compptr->h_samp_factor / cinfo->max_h_samp_factor;
+    if (strides && strides[i] != 0 && strides[i] < pw[i])
+      THROW("Invalid argument");
     ph[i] = ph0 * compptr->v_samp_factor / cinfo->max_v_samp_factor;
     outbuf[i] = (JSAMPROW *)malloc(sizeof(JSAMPROW) * ph[i]);
     if (!outbuf[i])
@@ -1755,7 +1761,7 @@ DLLEXPORT int tj3EncodeYUV8(tjhandle handle, const unsigned char *srcBuf,
   pw0 = tj3YUVPlaneWidth(0, width, this->subsamp);
   ph0 = tj3YUVPlaneHeight(0, height, this->subsamp);
   dstPlanes[0] = dstBuf;
-  strides[0] = PAD(pw0, align);
+  strides[0] = (int)PAD((unsigned long long)pw0, align);
   if (this->subsamp == TJSAMP_GRAY) {
     strides[1] = strides[2] = 0;
     dstPlanes[1] = dstPlanes[2] = NULL;
@@ -1763,7 +1769,7 @@ DLLEXPORT int tj3EncodeYUV8(tjhandle handle, const unsigned char *srcBuf,
     int pw1 = tj3YUVPlaneWidth(1, width, this->subsamp);
     int ph1 = tj3YUVPlaneHeight(1, height, this->subsamp);
 
-    strides[1] = strides[2] = PAD(pw1, align);
+    strides[1] = strides[2] = (int)PAD((unsigned long long)pw1, align);
     if ((unsigned long long)strides[0] * (unsigned long long)ph0 >
         (unsigned long long)INT_MAX ||
         (unsigned long long)strides[1] * (unsigned long long)ph1 >
@@ -2245,6 +2251,8 @@ DLLEXPORT int tj3DecompressToYUVPlanes8(tjhandle handle,
     iw[i] = compptr->width_in_blocks * dctsize;
     ih = compptr->height_in_blocks * dctsize;
     pw[i] = tj3YUVPlaneWidth(i, dinfo->output_width, this->subsamp);
+    if (strides && strides[i] != 0 && strides[i] < pw[i])
+      THROW("Invalid argument");
     ph[i] = tj3YUVPlaneHeight(i, dinfo->output_height, this->subsamp);
     if (iw[i] != pw[i] || ih != ph[i]) usetmpbuf = 1;
     th[i] = compptr->v_samp_factor * dctsize;
@@ -2643,6 +2651,8 @@ DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
         &_tmpbuf_aligned[PAD(compptr->width_in_blocks * DCTSIZE, 32) * row];
     }
     pw[i] = pw0 * compptr->h_samp_factor / dinfo->max_h_samp_factor;
+    if (strides && strides[i] != 0 && strides[i] < pw[i])
+      THROW("Invalid argument");
     ph[i] = ph0 * compptr->v_samp_factor / dinfo->max_v_samp_factor;
     inbuf[i] = (JSAMPROW *)malloc(sizeof(JSAMPROW) * ph[i]);
     if (!inbuf[i])
@@ -2733,7 +2743,7 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
   pw0 = tj3YUVPlaneWidth(0, width, this->subsamp);
   ph0 = tj3YUVPlaneHeight(0, height, this->subsamp);
   srcPlanes[0] = srcBuf;
-  strides[0] = PAD(pw0, align);
+  strides[0] = (int)PAD((unsigned long long)pw0, align);
   if (this->subsamp == TJSAMP_GRAY) {
     strides[1] = strides[2] = 0;
     srcPlanes[1] = srcPlanes[2] = NULL;
@@ -2741,7 +2751,7 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
     int pw1 = tj3YUVPlaneWidth(1, width, this->subsamp);
     int ph1 = tj3YUVPlaneHeight(1, height, this->subsamp);
 
-    strides[1] = strides[2] = PAD(pw1, align);
+    strides[1] = strides[2] = (int)PAD((unsigned long long)pw1, align);
     if ((unsigned long long)strides[0] * (unsigned long long)ph0 >
         (unsigned long long)INT_MAX ||
         (unsigned long long)strides[1] * (unsigned long long)ph1 >
