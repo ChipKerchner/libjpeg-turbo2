@@ -1452,6 +1452,15 @@ jsimd_set_huff_encode_one_block(j_compress_ptr cinfo)
       jsimd_huff_encode_one_block_neon;
     return JSIMD_NEON;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+#if 1
+  if ((cinfo->master->simd_support & JSIMD_RVV) &&
+      cinfo->master->simd_huffman) {
+    cinfo->entropy->huff_encode_one_block_simd =
+      jsimd_huff_encode_one_block_rvv;
+    return JSIMD_RVV;
+  }
+#endif
 #endif
 
   return JSIMD_NONE;
@@ -1479,6 +1488,14 @@ jsimd_set_encode_mcu_AC_first_prepare(j_compress_ptr cinfo,
     *method = jsimd_encode_mcu_AC_first_prepare_neon;
     return JSIMD_NEON;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+#if 0
+  if ((cinfo->master->simd_support & JSIMD_RVV) &&
+      cinfo->master->simd_huffman) {
+    *method = jsimd_encode_mcu_AC_first_prepare_rvv;
+    return JSIMD_RVV;
+  }
+#endif
 #endif
 
   return JSIMD_NONE;
@@ -1506,6 +1523,14 @@ jsimd_set_encode_mcu_AC_refine_prepare(j_compress_ptr cinfo,
     *method = jsimd_encode_mcu_AC_refine_prepare_neon;
     return JSIMD_NEON;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+#if 0
+  if ((cinfo->master->simd_support & JSIMD_RVV) &&
+      cinfo->master->simd_huffman) {
+    *method = jsimd_encode_mcu_AC_refine_prepare_rvv;
+    return JSIMD_RVV;
+  }
+#endif
 #endif
 
   return JSIMD_NONE;

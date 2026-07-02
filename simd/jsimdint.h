@@ -648,6 +648,10 @@ EXTERN(JOCTET *) jsimd_huff_encode_one_block_neon
   (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
    void *actbl);
 
+EXTERN(JOCTET *) jsimd_huff_encode_one_block_rvv
+  (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
+   void *actbl);
+
 
 /* Progressive Huffman Encoding */
 
@@ -662,5 +666,12 @@ EXTERN(void) jsimd_encode_mcu_AC_first_prepare_neon
   (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
    UJCOEF *values, size_t *zerobits);
 EXTERN(int) jsimd_encode_mcu_AC_refine_prepare_neon
+  (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
+   UJCOEF *absvalues, size_t *bits);
+
+EXTERN(void) jsimd_encode_mcu_AC_first_prepare_rvv
+  (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
+   UJCOEF *values, size_t *zerobits);
+EXTERN(int) jsimd_encode_mcu_AC_refine_prepare_rvv
   (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
    UJCOEF *absvalues, size_t *bits);

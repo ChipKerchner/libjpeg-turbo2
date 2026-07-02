@@ -472,12 +472,13 @@ endif()
 set(SIMD_SOURCES riscv64/jccolor-rvv.c riscv64/jcgray-rvv.c
   riscv64/jcsample-rvv.c riscv64/jdcolor-rvv.c riscv64/jdmerge-rvv.c
   riscv64/jdsample-rvv.c riscv64/jfdctfst-rvv.c riscv64/jfdctint-rvv.c
-  riscv64/jidctfst-rvv.c riscv64/jidctint-rvv.c riscv64/jquanti-rvv.c)
+  riscv64/jidctfst-rvv.c riscv64/jidctint-rvv.c riscv64/jquanti-rvv.c
+  riscv64/jchuff-rvv.c)
 
 enable_language(ASM)
 
 set_source_files_properties(${SIMD_SOURCES} PROPERTIES
-  COMPILE_FLAGS -march=rv64gcv)
+  COMPILE_FLAGS -march=rv64gcv_zvbb)
 
 if(UNIX)
   include(CheckSymbolExists)
