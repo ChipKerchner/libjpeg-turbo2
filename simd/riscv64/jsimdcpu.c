@@ -26,9 +26,6 @@
 
 #include "../jsimdint.h"
 
-#if (!defined(__riscv_v) || __riscv_v < 1000000 || __riscv_v >= 2000000) && \
-    (defined(HAVE_GETAUXVAL) || defined(HAVE_ELF_AUX_INFO))
-
 #if defined(__linux__)
 #include <asm/hwcap.h>
 #include <asm/hwprobe.h>
@@ -38,6 +35,9 @@
 #define COMPAT_HWCAP_ISA_V  (1 << ('V' - 'A'))
 #endif
 #include <sys/auxv.h>
+
+#if (!defined(__riscv_v) || __riscv_v < 1000000 || __riscv_v >= 2000000) && \
+    (defined(HAVE_GETAUXVAL) || defined(HAVE_ELF_AUX_INFO))
 
 extern int has_compliant_vsetvli(void);
 
@@ -60,6 +60,18 @@ static int is_rvv_1_0_available(void)
 
 #endif
 
+static int is_rva23_available(void)
+{
+#if defined(__linux__)
+  struct riscv_hwprobe pair = { RISCV_HWPROBE_KEY_IMA_EXT_0, 0 };
+
+  if (syscall(__NR_riscv_hwprobe, &pair, 1, 0, 0, 0) >= 0)
+    return (pair.value & RISCV_HWPROBE_EXT_ZVBB);
+  else
+#endif
+  return 0;
+}
+
 
 HIDDEN unsigned int
 jpeg_simd_cpu_support(void)
@@ -81,6 +93,10 @@ jpeg_simd_cpu_support(void)
   if (cpufeatures & COMPAT_HWCAP_ISA_V && is_rvv_1_0_available())
     simd_support |= JSIMD_RVV;
 #endif
+  if (simd_support & JSIMD_RVV) {
+    if (is_rva23_available())
+      simd_support |= JSIMD_RVA23;
+  }
 
   return simd_support;
 }

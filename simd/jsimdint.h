@@ -648,7 +648,10 @@ EXTERN(JOCTET *) jsimd_huff_encode_one_block_neon
   (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
    void *actbl);
 
-EXTERN(JOCTET *) jsimd_huff_encode_one_block_rvv
+EXTERN(JOCTET *) jsimd_huff_encode_one_block_zbb_rvv
+  (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
+   void *actbl);
+EXTERN(JOCTET *) jsimd_huff_encode_one_block_zvbb_rvv
   (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
    void *actbl);
 

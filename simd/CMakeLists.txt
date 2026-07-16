@@ -464,6 +464,29 @@ check_c_source_compiles("
 
 unset(CMAKE_REQUIRED_FLAGS)
 
+set(CMAKE_REQUIRED_FLAGS -march=rva23u64)
+
+check_c_source_compiles("
+  #include <riscv_vector.h>
+  int main(int argc, char **argv) {
+    size_t vl = __riscv_vsetvl_e32m8(32);
+    vuint32m8_t tmp0 = __riscv_vmv_v_x_u32m8(argc, vl);
+    vuint32m8_t tmp1 = __riscv_vclz_v_u32m8(tmp0, vl);
+    return __riscv_vmv_x_s_u32m8_u32(tmp1);
+  }" HAVE_RVA23)
+
+unset(CMAKE_REQUIRED_FLAGS)
+
+set(CMAKE_REQUIRED_FLAGS -march=rv64gcv_zbb)
+
+check_c_source_compiles("
+  #include <riscv_vector.h>
+  int main(int argc, char **argv) {
+    return 0;
+  }" HAVE_RVV_ZBB)
+
+unset(CMAKE_REQUIRED_FLAGS)
+
 if(NOT HAVE_RVV)
   simd_fail("SIMD extensions not available for this CPU")
   return()
@@ -472,13 +495,31 @@ endif()
 set(SIMD_SOURCES riscv64/jccolor-rvv.c riscv64/jcgray-rvv.c
   riscv64/jcsample-rvv.c riscv64/jdcolor-rvv.c riscv64/jdmerge-rvv.c
   riscv64/jdsample-rvv.c riscv64/jfdctfst-rvv.c riscv64/jfdctint-rvv.c
-  riscv64/jidctfst-rvv.c riscv64/jidctint-rvv.c riscv64/jquanti-rvv.c
-  riscv64/jchuff-rvv.c)
+  riscv64/jidctfst-rvv.c riscv64/jidctint-rvv.c riscv64/jquanti-rvv.c)
 
 enable_language(ASM)
 
 set_source_files_properties(${SIMD_SOURCES} PROPERTIES
-  COMPILE_FLAGS -march=rv64gcv_zvbb)
+  COMPILE_FLAGS -march=rv64gcv)
+
+if (HAVE_RVA23)
+  set(SIMD_RVA23_SOURCES riscv64/jchuff-zvbb-rvv.c)
+
+  set_source_files_properties(${SIMD_RVA23_SOURCES} PROPERTIES
+    COMPILE_FLAGS -march=rva23u64)
+endif()
+
+if (HAVE_RVV_ZBB)
+  set(SIMD_ZBB_SOURCES riscv64/jchuff-zbb-rvv.c)
+
+  set_source_files_properties(${SIMD_ZBB_SOURCES} PROPERTIES
+    COMPILE_FLAGS -march=rv64gcv_zbb)
+else()
+  set(SIMD_ZBB_SOURCES riscv64/jchuff-rvv.c)
+
+  set_source_files_properties(${SIMD_ZBB_SOURCES} PROPERTIES
+    COMPILE_FLAGS -march=rv64gcv)
+endif()
 
 if(UNIX)
   include(CheckSymbolExists)
@@ -494,8 +535,8 @@ if(UNIX)
   endif()
 endif()
 
-add_library(simd OBJECT ${SIMD_SOURCES} jsimd.c riscv64/jsimdcpu.c
-  riscv64/jsimdcpu.S)
+add_library(simd OBJECT ${SIMD_SOURCES} ${SIMD_RVA23_SOURCES}
+  ${SIMD_ZBB_SOURCES} jsimd.c riscv64/jsimdcpu.c riscv64/jsimdcpu.S)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)

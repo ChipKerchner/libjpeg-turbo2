@@ -31,13 +31,17 @@
 #include <float.h>
 #include <limits.h>
 
+#ifndef HUFFMAN_ENCODER_RVV
+#define HUFFMAN_ENCODER_RVV jsimd_huff_encode_one_block_zbb_rvv
+#endif
+
 
 #define VEC_LEN     (DCTSIZE * 4)
 
 /* Creates a vector of out = 16 - ctz(abs(in)) */
 #define CNT_BIAS    (127 - 1)
 
-#ifdef HAS_RVV_ZVBB_EXTENSION
+#ifdef __riscv_zvbb
 #define VEC_CLZ(in, out, mask, zero, shift) \
   { \
     mask = __riscv_vmslt_vx_i16m2_b8(in, 0, VEC_LEN); \
@@ -66,11 +70,11 @@ static const uint8_t jsimd_huff_encode_one_block_consts[] = {
    58,  44,  30,  46,  60,  74,  88, 102,
   116, 118, 104,  90,  76,  62,  78,  92,
   106, 120, 122, 108,  94, 110, 124, 126
-}; 
+};
 
 HIDDEN JOCTET *
-jsimd_huff_encode_one_block_rvv(void *state, JOCTET *buffer, JCOEFPTR block,
-                                int last_dc_val, void *dctbl, void *actbl)
+HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
+                    int last_dc_val, void *dctbl, void *actbl)
 {
   uint16_t block_diff[DCTSIZE2];
 
@@ -173,8 +177,7 @@ jsimd_huff_encode_one_block_rvv(void *state, JOCTET *buffer, JCOEFPTR block,
    */
   if (non_zero_coefficients > 8) {
     uint16_t block_nbits[DCTSIZE2];
-    vuint16m2_t out0, out1;
-    vuint16m2_t shift0, shift1;
+    vuint16m2_t out0, out1, shift0, shift1;
     vbool8_t mask0, mask1;
 
     /* Compute nbits needed to specify magnitude of each coefficient. */
@@ -195,8 +198,7 @@ jsimd_huff_encode_one_block_rvv(void *state, JOCTET *buffer, JCOEFPTR block,
     __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 0), rows0, VEC_LEN);
     __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 1), rows1, VEC_LEN);
 #if VEC_LEN == 16
-    vuint16m2_t out2, out3;
-    vuint16m2_t shift2, shift3;
+    vuint16m2_t out2, out3, shift2, shift3;
     vbool8_t mask2, mask3;
     VEC_CLZ(rows2, out2, mask2, rows_mask2, shift2)
     VEC_CLZ(rows3, out3, mask3, rows_mask3, shift3)
@@ -226,7 +228,7 @@ jsimd_huff_encode_one_block_rvv(void *state, JOCTET *buffer, JCOEFPTR block,
         r -= 16;
       }
       /* Emit Huffman symbol for run length / number of bits. (F.1.2.2.1) */
-      unsigned int rs = (r << 4) + nbits;
+      uint64_t rs = (r << 4) + nbits;
       PUT_CODE(((c_derived_tbl *)actbl)->ehufco[rs],
                ((c_derived_tbl *)actbl)->ehufsi[rs], diff)
       i++;
@@ -304,3 +306,4 @@ jsimd_huff_encode_one_block_rvv(void *state, JOCTET *buffer, JCOEFPTR block,
 
   return buffer;
 }
+

@@ -1454,11 +1454,18 @@ jsimd_set_huff_encode_one_block(j_compress_ptr cinfo)
   }
 #elif SIMD_ARCHITECTURE == RISCV64
 #if 1
-  if ((cinfo->master->simd_support & JSIMD_RVV) &&
+  if ((cinfo->master->simd_support & JSIMD_RVA23) &&
       cinfo->master->simd_huffman) {
     cinfo->entropy->huff_encode_one_block_simd =
-      jsimd_huff_encode_one_block_rvv;
+      jsimd_huff_encode_one_block_zvbb_rvv;
     return JSIMD_RVV;
+#ifdef __riscv_zbb
+  } else if ((cinfo->master->simd_support & JSIMD_RVV) &&
+      cinfo->master->simd_huffman) {
+    cinfo->entropy->huff_encode_one_block_simd =
+      jsimd_huff_encode_one_block_zbb_rvv;
+    return JSIMD_RVV;
+#endif
   }
 #endif
 #endif
