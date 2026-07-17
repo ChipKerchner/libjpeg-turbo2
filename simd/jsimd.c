@@ -1459,13 +1459,11 @@ jsimd_set_huff_encode_one_block(j_compress_ptr cinfo)
     cinfo->entropy->huff_encode_one_block_simd =
       jsimd_huff_encode_one_block_zvbb_rvv;
     return JSIMD_RVV;
-#ifdef __riscv_zbb
   } else if ((cinfo->master->simd_support & JSIMD_RVV) &&
       cinfo->master->simd_huffman) {
     cinfo->entropy->huff_encode_one_block_simd =
       jsimd_huff_encode_one_block_zbb_rvv;
     return JSIMD_RVV;
-#endif
   }
 #endif
 #endif

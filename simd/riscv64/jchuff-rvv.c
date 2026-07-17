@@ -24,6 +24,11 @@
  * Recommendation ITU-T T.81 (1992) | ISO/IEC 10918-1:1994.
  */
 
+#ifndef HUFFMAN_ENCODER_RVV
+#define HUFFMAN_ENCODER_RVV     jsimd_huff_encode_one_block_zbb_rvv
+#endif
+
+#ifdef USE_HUFFMAN_ENCODER_RVV_256
 #include "../jsimdint.h"
 #include <riscv_vector.h>
 #include "jchuff.h"
@@ -31,16 +36,33 @@
 #include <float.h>
 #include <limits.h>
 
-#ifndef HUFFMAN_ENCODER_RVV
-#define HUFFMAN_ENCODER_RVV jsimd_huff_encode_one_block_zbb_rvv
-#endif
 
+#ifndef HUFFMAN_ENCODER_256_RVV
+#define HUFFMAN_ENCODER_256_RVV jsimd_huff_encode_one_block_zbb_256_rvv
+#endif
 
 #define VEC_LEN     (DCTSIZE * 4)
 
-/* Creates a vector of out = 16 - ctz(abs(in)) */
 #define CNT_BIAS    (127 - 1)
 
+static const uint8_t jsimd_huff_encode_one_block_consts[] = {
+    0,   2,  16,  32,  18,   4,   6,  20,
+   34,  48,  64,  50,  36,  22,   8,  10,
+   24,  38,  52,  66,  80,  96,  82,  68,
+   54,  40,  26,  12,  14,  28,  42,  56,
+   70,  84,  98, 112, 114, 100,  86,  72,
+   58,  44,  30,  46,  60,  74,  88, 102,
+  116, 118, 104,  90,  76,  62,  78,  92,
+  106, 120, 122, 108,  94, 110, 124, 126
+};
+#else
+#undef VEC_CLZ
+#undef VEC_LEN
+
+#define VEC_LEN     (DCTSIZE * 2)
+#endif
+
+/* Creates a vector of out = 16 - ctz(abs(in)) */
 #ifdef __riscv_zvbb
 #define VEC_CLZ(in, out, mask, zero, shift) \
   { \
@@ -61,21 +83,21 @@
   }
 #endif
 
-static const uint8_t jsimd_huff_encode_one_block_consts[] = {
-    0,   2,  16,  32,  18,   4,   6,  20,
-   34,  48,  64,  50,  36,  22,   8,  10,
-   24,  38,  52,  66,  80,  96,  82,  68,
-   54,  40,  26,  12,  14,  28,  42,  56,
-   70,  84,  98, 112, 114, 100,  86,  72,
-   58,  44,  30,  46,  60,  74,  88, 102,
-  116, 118, 104,  90,  76,  62,  78,  92,
-  106, 120, 122, 108,  94, 110, 124, 126
-};
-
+#ifdef USE_HUFFMAN_ENCODER_RVV_256
+static INLINE JOCTET *
+#else
 HIDDEN JOCTET *
+#endif
 HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
                     int last_dc_val, void *dctbl, void *actbl)
 {
+#ifndef USE_HUFFMAN_ENCODER_RVV_256
+  if (__riscv_vsetvlmax_e16m1() >= DCTSIZE * 2) {
+    return HUFFMAN_ENCODER_256_RVV(state, buffer, block,
+                                   last_dc_val, dctbl, actbl);
+  }
+#endif
+
   uint16_t block_diff[DCTSIZE2];
 
   /* Load lookup table indices for rows of zig-zag ordering. */
@@ -153,7 +175,7 @@ HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
   /* For negative coeffs: diff = abs(coeff) - 1 = ~abs(coeff) */
   int64_t mask = diff >> ((sizeof(uint64_t) * CHAR_BIT) - 1);
   diff += mask;
-  uint64_t abs_diff = diff ^ mask;
+  int64_t abs_diff = diff ^ mask;
   uint64_t lz = BUILTIN_CLZL(abs_diff);
   uint64_t nbits = (sizeof(uint64_t) * CHAR_BIT) - lz;
   diff = ((uint64_t)(diff) << lz) >> lz;
@@ -307,3 +329,5 @@ HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
   return buffer;
 }
 
+#undef USE_HUFFMAN_ENCODER_RVV_256
+#undef HUFFMAN_ENCODER_RVV

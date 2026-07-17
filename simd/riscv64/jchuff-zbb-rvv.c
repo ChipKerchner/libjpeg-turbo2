@@ -1,3 +1,10 @@
-#define HUFFMAN_ENCODER_RVV jsimd_huff_encode_one_block_zbb_rvv
+#define HUFFMAN_ENCODER_256_RVV     jsimd_huff_encode_one_block_zbb_256_rvv
+
+#define USE_HUFFMAN_ENCODER_RVV_256
+#define HUFFMAN_ENCODER_RVV         HUFFMAN_ENCODER_256_RVV
+
+#include "jchuff-rvv.c"
+
+#define HUFFMAN_ENCODER_RVV         jsimd_huff_encode_one_block_zbb_rvv
 
 #include "jchuff-rvv.c"
