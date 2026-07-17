@@ -5,6 +5,7 @@
  * Copyright (C) 2022-2023, Institute of Software, Chinese Academy of Sciences.
  *                          Author:  Zhiyuan Tan
  * Copyright (C) 2026, Olaf Bernstein.
+ * Copyright (C) 2026 Chip Kerchner.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages

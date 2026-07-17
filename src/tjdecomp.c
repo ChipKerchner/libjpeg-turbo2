@@ -342,9 +342,10 @@ int main(int argc, char **argv)
       sampleSize > (unsigned long long)((size_t)-1))
     THROW("allocating uncompressed image buffer", "Image is too large");
 #endif
+
   if ((dstBuf =
-       (unsigned char *)malloc(width * height * tjPixelSize[pixelFormat] *
-                               sampleSize)) == NULL)
+       (unsigned char *)malloc((size_t)width * height *
+                               tjPixelSize[pixelFormat] * sampleSize)) == NULL)
     THROW_UNIX("allocating uncompressed image buffer");
 
   if (precision <= 8) {
