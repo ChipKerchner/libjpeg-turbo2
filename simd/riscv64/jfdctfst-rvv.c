@@ -82,7 +82,7 @@
 
 static void jsimd_fdct_ifast_rvv_vlen256(DCTELEM *data)
 {
-  vint16mf2x4_t cols0, cols1;
+  vint16mf2x4_t col0123, col4567;
   vint16mf2_t row0, row1, row2, row3, row4, row5, row6, row7,
     col0, col1, col2, col3, col4, col5, col6, col7,
     tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp10, tmp11, tmp12, tmp13,
@@ -99,16 +99,16 @@ static void jsimd_fdct_ifast_rvv_vlen256(DCTELEM *data)
   /* Pass 1: process rows */
 
   /* Load and transpose row vectors to column vectors. */
-  cols0 = __riscv_vlsseg4e16_v_i16mf2x4(data + 0, col_stride, vl);
-  cols1 = __riscv_vlsseg4e16_v_i16mf2x4(data + 4, col_stride, vl);
-  col0 = __riscv_vget_v_i16mf2x4_i16mf2(cols0, 0);
-  col1 = __riscv_vget_v_i16mf2x4_i16mf2(cols0, 1);
-  col2 = __riscv_vget_v_i16mf2x4_i16mf2(cols0, 2);
-  col3 = __riscv_vget_v_i16mf2x4_i16mf2(cols0, 3);
-  col4 = __riscv_vget_v_i16mf2x4_i16mf2(cols1, 0);
-  col5 = __riscv_vget_v_i16mf2x4_i16mf2(cols1, 1);
-  col6 = __riscv_vget_v_i16mf2x4_i16mf2(cols1, 2);
-  col7 = __riscv_vget_v_i16mf2x4_i16mf2(cols1, 3);
+  col0123 = __riscv_vlsseg4e16_v_i16mf2x4(data + 0, col_stride, vl);
+  col4567 = __riscv_vlsseg4e16_v_i16mf2x4(data + 4, col_stride, vl);
+  col0 = __riscv_vget_v_i16mf2x4_i16mf2(col0123, 0);
+  col1 = __riscv_vget_v_i16mf2x4_i16mf2(col0123, 1);
+  col2 = __riscv_vget_v_i16mf2x4_i16mf2(col0123, 2);
+  col3 = __riscv_vget_v_i16mf2x4_i16mf2(col0123, 3);
+  col4 = __riscv_vget_v_i16mf2x4_i16mf2(col4567, 0);
+  col5 = __riscv_vget_v_i16mf2x4_i16mf2(col4567, 1);
+  col6 = __riscv_vget_v_i16mf2x4_i16mf2(col4567, 2);
+  col7 = __riscv_vget_v_i16mf2x4_i16mf2(col4567, 3);
 
   tmp0 = __riscv_vadd_vv_i16mf2(col0, col7, vl);
   tmp7 = __riscv_vsub_vv_i16mf2(col0, col7, vl);
@@ -196,7 +196,7 @@ static void jsimd_fdct_ifast_rvv_vlen256(DCTELEM *data)
 HIDDEN void
 jsimd_fdct_ifast_rvv(DCTELEM *data)
 {
-  vint16m1x4_t cols0, cols1;
+  vint16m1x4_t col0123, col4567;
   vint16m1_t row0, row1, row2, row3, row4, row5, row6, row7,
     col0, col1, col2, col3, col4, col5, col6, col7,
     tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp10, tmp11, tmp12, tmp13,
@@ -218,16 +218,16 @@ jsimd_fdct_ifast_rvv(DCTELEM *data)
   /* Pass 1: process rows */
 
   /* Load and transpose row vectors to column vectors. */
-  cols0 = __riscv_vlsseg4e16_v_i16m1x4(data + 0, col_stride, vl);
-  cols1 = __riscv_vlsseg4e16_v_i16m1x4(data + 4, col_stride, vl);
-  col0 = __riscv_vget_v_i16m1x4_i16m1(cols0, 0);
-  col1 = __riscv_vget_v_i16m1x4_i16m1(cols0, 1);
-  col2 = __riscv_vget_v_i16m1x4_i16m1(cols0, 2);
-  col3 = __riscv_vget_v_i16m1x4_i16m1(cols0, 3);
-  col4 = __riscv_vget_v_i16m1x4_i16m1(cols1, 0);
-  col5 = __riscv_vget_v_i16m1x4_i16m1(cols1, 1);
-  col6 = __riscv_vget_v_i16m1x4_i16m1(cols1, 2);
-  col7 = __riscv_vget_v_i16m1x4_i16m1(cols1, 3);
+  col0123 = __riscv_vlsseg4e16_v_i16m1x4(data + 0, col_stride, vl);
+  col4567 = __riscv_vlsseg4e16_v_i16m1x4(data + 4, col_stride, vl);
+  col0 = __riscv_vget_v_i16m1x4_i16m1(col0123, 0);
+  col1 = __riscv_vget_v_i16m1x4_i16m1(col0123, 1);
+  col2 = __riscv_vget_v_i16m1x4_i16m1(col0123, 2);
+  col3 = __riscv_vget_v_i16m1x4_i16m1(col0123, 3);
+  col4 = __riscv_vget_v_i16m1x4_i16m1(col4567, 0);
+  col5 = __riscv_vget_v_i16m1x4_i16m1(col4567, 1);
+  col6 = __riscv_vget_v_i16m1x4_i16m1(col4567, 2);
+  col7 = __riscv_vget_v_i16m1x4_i16m1(col4567, 3);
 
   tmp0 = __riscv_vadd_vv_i16m1(col0, col7, vl);
   tmp7 = __riscv_vsub_vv_i16m1(col0, col7, vl);
