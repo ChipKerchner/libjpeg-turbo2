@@ -26,6 +26,8 @@
 
 #include "../jsimdint.h"
 
+extern int get_vsetvlmax_e16m1(void);
+
 #if defined(__linux__)
 #include <asm/hwcap.h>
 #include <asm/hwprobe.h>
@@ -94,6 +96,8 @@ jpeg_simd_cpu_support(void)
     simd_support |= JSIMD_RVV;
 #endif
   if (simd_support & JSIMD_RVV) {
+    if (get_vsetvlmax_e16m1() >= DCTSIZE * 2)
+      simd_support |= JSIMD_RVV256;
     if (is_rva23_available())
       simd_support |= JSIMD_RVA23;
   }

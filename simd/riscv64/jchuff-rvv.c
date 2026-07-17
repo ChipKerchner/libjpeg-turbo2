@@ -83,21 +83,10 @@ static const uint8_t jsimd_huff_encode_one_block_consts[] = {
   }
 #endif
 
-#ifdef USE_HUFFMAN_ENCODER_RVV_256
-static INLINE JOCTET *
-#else
 HIDDEN JOCTET *
-#endif
 HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
                     int last_dc_val, void *dctbl, void *actbl)
 {
-#ifndef USE_HUFFMAN_ENCODER_RVV_256
-  if (__riscv_vsetvlmax_e16m1() >= DCTSIZE * 2) {
-    return HUFFMAN_ENCODER_256_RVV(state, buffer, block,
-                                   last_dc_val, dctbl, actbl);
-  }
-#endif
-
   uint16_t block_diff[DCTSIZE2];
 
   /* Load lookup table indices for rows of zig-zag ordering. */

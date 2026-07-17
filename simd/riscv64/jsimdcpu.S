@@ -47,3 +47,14 @@ has_compliant_vsetvli:
     .option pop
 
     ret
+
+.globl  get_vsetvlmax_e16m1
+
+get_vsetvlmax_e16m1:
+    .option push
+    .option arch, +v
+    vsetvli a0, zero, e16, m1, ta, ma
+
+    .option pop
+
+    ret

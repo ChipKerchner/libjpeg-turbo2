@@ -1456,13 +1456,23 @@ jsimd_set_huff_encode_one_block(j_compress_ptr cinfo)
 #if 1
   if ((cinfo->master->simd_support & JSIMD_RVA23) &&
       cinfo->master->simd_huffman) {
-    cinfo->entropy->huff_encode_one_block_simd =
-      jsimd_huff_encode_one_block_zvbb_rvv;
+    if (cinfo->master->simd_support & JSIMD_RVV256) {
+      cinfo->entropy->huff_encode_one_block_simd =
+        jsimd_huff_encode_one_block_zvbb_256_rvv;
+    } else {
+      cinfo->entropy->huff_encode_one_block_simd =
+        jsimd_huff_encode_one_block_zvbb_rvv;
+    }
     return JSIMD_RVV;
   } else if ((cinfo->master->simd_support & JSIMD_RVV) &&
       cinfo->master->simd_huffman) {
-    cinfo->entropy->huff_encode_one_block_simd =
-      jsimd_huff_encode_one_block_zbb_rvv;
+    if (cinfo->master->simd_support & JSIMD_RVV256) {
+      cinfo->entropy->huff_encode_one_block_simd =
+        jsimd_huff_encode_one_block_zbb_256_rvv;
+    } else {
+      cinfo->entropy->huff_encode_one_block_simd =
+        jsimd_huff_encode_one_block_zbb_rvv;
+    }
     return JSIMD_RVV;
   }
 #endif

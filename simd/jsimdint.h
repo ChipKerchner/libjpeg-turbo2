@@ -654,6 +654,12 @@ EXTERN(JOCTET *) jsimd_huff_encode_one_block_zbb_rvv
 EXTERN(JOCTET *) jsimd_huff_encode_one_block_zvbb_rvv
   (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
    void *actbl);
+EXTERN(JOCTET *) jsimd_huff_encode_one_block_zbb_256_rvv
+  (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
+   void *actbl);
+EXTERN(JOCTET *) jsimd_huff_encode_one_block_zvbb_256_rvv
+  (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
+   void *actbl);
 
 
 /* Progressive Huffman Encoding */
