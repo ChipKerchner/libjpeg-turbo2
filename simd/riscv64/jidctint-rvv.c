@@ -187,33 +187,6 @@ static void jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
   /* Transpose column vectors back to row vectors. */
   TRANSPOSE_8x8_VLEN256(out, out);
 
-#if (CENTERJSAMPLE == 128) && (MAXJSAMPLE == 255)
-   dst0 =
-     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out0, 0, __RISCV_VXRM_RDN, vl));
-   dst1 =
-     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out1, 0, __RISCV_VXRM_RDN, vl));
-   dst2 =
-     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out2, 0, __RISCV_VXRM_RDN, vl));
-   dst3 =
-     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out3, 0, __RISCV_VXRM_RDN, vl));
-   dst4 =
-     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out4, 0, __RISCV_VXRM_RDN, vl));
-   dst5 =
-     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out5, 0, __RISCV_VXRM_RDN, vl));
-   dst6 =
-     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out6, 0, __RISCV_VXRM_RDN, vl));
-   dst7 =
-     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnclip_wx_i8mf4(out7, 0, __RISCV_VXRM_RDN, vl));
-
-   dst0 = __riscv_vadd_vx_u8mf4(dst0, (uint8_t)(CENTERJSAMPLE), vl);
-   dst1 = __riscv_vadd_vx_u8mf4(dst1, (uint8_t)(CENTERJSAMPLE), vl);
-   dst2 = __riscv_vadd_vx_u8mf4(dst2, (uint8_t)(CENTERJSAMPLE), vl);
-   dst3 = __riscv_vadd_vx_u8mf4(dst3, (uint8_t)(CENTERJSAMPLE), vl);
-   dst4 = __riscv_vadd_vx_u8mf4(dst4, (uint8_t)(CENTERJSAMPLE), vl);
-   dst5 = __riscv_vadd_vx_u8mf4(dst5, (uint8_t)(CENTERJSAMPLE), vl);
-   dst6 = __riscv_vadd_vx_u8mf4(dst6, (uint8_t)(CENTERJSAMPLE), vl);
-   dst7 = __riscv_vadd_vx_u8mf4(dst7, (uint8_t)(CENTERJSAMPLE), vl);
-#else
   out0 = __riscv_vadd_vx_i16mf2(out0, CENTERJSAMPLE, vl);
   out0  = __riscv_vmax_vx_i16mf2(out0, 0, vl);
   out0 = __riscv_vmin_vx_i16mf2(out0, MAXJSAMPLE, vl);
@@ -262,7 +235,6 @@ static void jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnsra_wx_i8mf4(out6, 0, vl));
   dst7 =
     __riscv_vreinterpret_v_i8mf4_u8mf4(__riscv_vnsra_wx_i8mf4(out7, 0, vl));
-#endif
 
   __riscv_vse8_v_u8mf4(output_buf[0] + output_col, dst0, vl);
   __riscv_vse8_v_u8mf4(output_buf[1] + output_col, dst1, vl);
@@ -417,33 +389,6 @@ jsimd_idct_islow_rvv(void *dct_table, JCOEFPTR coef_block,
   /* Transpose column vectors back to row vectors. */
   TRANSPOSE_8x8(out, out);
 
-#if (CENTERJSAMPLE == 128) && (MAXJSAMPLE == 255)
-   dst0 =
-     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out0, 0, __RISCV_VXRM_RDN, vl));
-   dst1 =
-     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out1, 0, __RISCV_VXRM_RDN, vl));
-   dst2 =
-     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out2, 0, __RISCV_VXRM_RDN, vl));
-   dst3 =
-     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out3, 0, __RISCV_VXRM_RDN, vl));
-   dst4 =
-     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out4, 0, __RISCV_VXRM_RDN, vl));
-   dst5 =
-     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out5, 0, __RISCV_VXRM_RDN, vl));
-   dst6 =
-     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out6, 0, __RISCV_VXRM_RDN, vl));
-   dst7 =
-     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnclip_wx_i8mf2(out7, 0, __RISCV_VXRM_RDN, vl));
-
-   dst0 = __riscv_vadd_vx_u8mf2(dst0, (uint8_t)(CENTERJSAMPLE), vl);
-   dst1 = __riscv_vadd_vx_u8mf2(dst1, (uint8_t)(CENTERJSAMPLE), vl);
-   dst2 = __riscv_vadd_vx_u8mf2(dst2, (uint8_t)(CENTERJSAMPLE), vl);
-   dst3 = __riscv_vadd_vx_u8mf2(dst3, (uint8_t)(CENTERJSAMPLE), vl);
-   dst4 = __riscv_vadd_vx_u8mf2(dst4, (uint8_t)(CENTERJSAMPLE), vl);
-   dst5 = __riscv_vadd_vx_u8mf2(dst5, (uint8_t)(CENTERJSAMPLE), vl);
-   dst6 = __riscv_vadd_vx_u8mf2(dst6, (uint8_t)(CENTERJSAMPLE), vl);
-   dst7 = __riscv_vadd_vx_u8mf2(dst7, (uint8_t)(CENTERJSAMPLE), vl);
-#else
   out0 = __riscv_vadd_vx_i16m1(out0, CENTERJSAMPLE, vl);
   out0  = __riscv_vmax_vx_i16m1(out0, 0, vl);
   out0 = __riscv_vmin_vx_i16m1(out0, MAXJSAMPLE, vl);
@@ -492,7 +437,6 @@ jsimd_idct_islow_rvv(void *dct_table, JCOEFPTR coef_block,
     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnsra_wx_i8mf2(out6, 0, vl));
   dst7 =
     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnsra_wx_i8mf2(out7, 0, vl));
-#endif
 
   __riscv_vse8_v_u8mf2(output_buf[0] + output_col, dst0, vl);
   __riscv_vse8_v_u8mf2(output_buf[1] + output_col, dst1, vl);
