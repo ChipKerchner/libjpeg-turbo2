@@ -445,7 +445,11 @@ elseif(CPU_TYPE STREQUAL "riscv64")
 
 set(SIMD_ARCHITECTURE RISCV64 PARENT_SCOPE)
 
-set(CMAKE_REQUIRED_FLAGS -march=rv64gcv)
+set(RISCV_FLAGS -march=rv64gcv)
+set(RISCV_RVA23_FLAGS -march=rva23u64)
+set(RISCV_ZBB_FLAGS -march=rv64gcv_zbb)
+
+set(CMAKE_REQUIRED_FLAGS ${RISCV_FLAGS})
 
 check_c_source_compiles("
   #include <riscv_vector.h>
@@ -464,7 +468,7 @@ check_c_source_compiles("
 
 unset(CMAKE_REQUIRED_FLAGS)
 
-set(CMAKE_REQUIRED_FLAGS -march=rva23u64)
+set(CMAKE_REQUIRED_FLAGS ${RISCV_RVA23_FLAGS})
 
 check_c_source_compiles("
   #include <riscv_vector.h>
@@ -477,7 +481,7 @@ check_c_source_compiles("
 
 unset(CMAKE_REQUIRED_FLAGS)
 
-set(CMAKE_REQUIRED_FLAGS -march=rv64gcv_zbb)
+set(CMAKE_REQUIRED_FLAGS ${RISCV_ZBB_FLAGS})
 
 check_c_source_compiles("
   #include <riscv_vector.h>
@@ -500,25 +504,26 @@ set(SIMD_SOURCES riscv64/jccolor-rvv.c riscv64/jcgray-rvv.c
 enable_language(ASM)
 
 set_source_files_properties(${SIMD_SOURCES} PROPERTIES
-  COMPILE_FLAGS -march=rv64gcv)
+  COMPILE_FLAGS ${RISCV_FLAGS})
+
+set(SIMD_RVA23_SOURCES riscv64/jchuff-zvbb-rvv.c)
 
 if (HAVE_RVA23)
-  set(SIMD_RVA23_SOURCES riscv64/jchuff-zvbb-rvv.c)
-
   set_source_files_properties(${SIMD_RVA23_SOURCES} PROPERTIES
-    COMPILE_FLAGS -march=rva23u64)
+    COMPILE_FLAGS ${RISCV_RVA23_FLAGS})
+else()
+  set_source_files_properties(${SIMD_RVA23_SOURCES} PROPERTIES
+    COMPILE_FLAGS ${RISCV_FLAGS})
 endif()
 
+set(SIMD_ZBB_SOURCES riscv64/jchuff-zbb-rvv.c)
+
 if (HAVE_RVV_ZBB)
-  set(SIMD_ZBB_SOURCES riscv64/jchuff-zbb-rvv.c)
-
   set_source_files_properties(${SIMD_ZBB_SOURCES} PROPERTIES
-    COMPILE_FLAGS -march=rv64gcv_zbb)
+    COMPILE_FLAGS ${RISCV_ZBB_FLAGS})
 else()
-  set(SIMD_ZBB_SOURCES riscv64/jchuff-rvv.c)
-
   set_source_files_properties(${SIMD_ZBB_SOURCES} PROPERTIES
-    COMPILE_FLAGS -march=rv64gcv)
+    COMPILE_FLAGS ${RISCV_FLAGS})
 endif()
 
 if(UNIX)

@@ -87,6 +87,7 @@ HIDDEN JOCTET *
 HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
                     int last_dc_val, void *dctbl, void *actbl)
 {
+#if defined(__riscv_zvbb) || defined(__riscv_zbb)
   uint16_t block_diff[DCTSIZE2];
 
   /* Load lookup table indices for rows of zig-zag ordering. */
@@ -314,6 +315,7 @@ HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
 
   state_ptr->cur.put_buffer = put_buffer;
   state_ptr->cur.free_bits = free_bits;
+#endif
 
   return buffer;
 }

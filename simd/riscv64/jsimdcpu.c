@@ -74,6 +74,18 @@ static int is_rva23_available(void)
   return 0;
 }
 
+static int is_rvv_zbb_available(void)
+{
+#if defined(__linux__)
+  struct riscv_hwprobe pair = { RISCV_HWPROBE_KEY_IMA_EXT_0, 0 };
+
+  if (syscall(__NR_riscv_hwprobe, &pair, 1, 0, 0, 0) >= 0)
+    return (pair.value & RISCV_HWPROBE_EXT_ZBB);
+  else
+#endif
+  return 0;
+}
+
 
 HIDDEN unsigned int
 jpeg_simd_cpu_support(void)
@@ -100,6 +112,8 @@ jpeg_simd_cpu_support(void)
       simd_support |= JSIMD_RVV256;
     if (is_rva23_available())
       simd_support |= JSIMD_RVA23;
+    if (is_rvv_zbb_available())
+      simd_support |= JSIMD_RVVZBB;
   }
 
   return simd_support;

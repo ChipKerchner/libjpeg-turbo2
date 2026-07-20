@@ -88,6 +88,12 @@ init_simd(j_common_ptr cinfo)
 #elif SIMD_ARCHITECTURE == RISCV64
   if (!GETENV_S(env, 2, "JSIMD_FORCERVV") && !strcmp(env, "1"))
     simd_support = JSIMD_RVV;
+  if (!GETENV_S(env, 2, "JSIMD_FORCERVA23") && !strcmp(env, "1"))
+    simd_support |= JSIMD_RVA23;
+  if (!GETENV_S(env, 2, "JSIMD_FORCERVV256") && !strcmp(env, "1"))
+    simd_support |= JSIMD_RVV256;
+  if (!GETENV_S(env, 2, "JSIMD_FORCERVVZBB") && !strcmp(env, "1"))
+    simd_support |= JSIMD_RVVZBB;
 #elif SIMD_ARCHITECTURE == MIPS64
   if (!GETENV_S(env, 2, "JSIMD_FORCEMMI") && !strcmp(env, "1"))
     simd_support = JSIMD_MMI;
@@ -1454,26 +1460,27 @@ jsimd_set_huff_encode_one_block(j_compress_ptr cinfo)
   }
 #elif SIMD_ARCHITECTURE == RISCV64
 #if 1
-  if ((cinfo->master->simd_support & JSIMD_RVA23) &&
+  if ((cinfo->master->simd_support & JSIMD_RVV) &&
       cinfo->master->simd_huffman) {
-    if (cinfo->master->simd_support & JSIMD_RVV256) {
-      cinfo->entropy->huff_encode_one_block_simd =
-        jsimd_huff_encode_one_block_zvbb_256_rvv;
-    } else {
-      cinfo->entropy->huff_encode_one_block_simd =
-        jsimd_huff_encode_one_block_zvbb_rvv;
+    if (cinfo->master->simd_support & JSIMD_RVA23) {
+      if (cinfo->master->simd_support & JSIMD_RVV256) {
+        cinfo->entropy->huff_encode_one_block_simd =
+          jsimd_huff_encode_one_block_zvbb_256_rvv;
+      } else {
+        cinfo->entropy->huff_encode_one_block_simd =
+          jsimd_huff_encode_one_block_zvbb_rvv;
+      }
+      return JSIMD_RVV;
+    } else if (cinfo->master->simd_support & JSIMD_RVVZBB) {
+      if (cinfo->master->simd_support & JSIMD_RVV256) {
+        cinfo->entropy->huff_encode_one_block_simd =
+          jsimd_huff_encode_one_block_zbb_256_rvv;
+      } else {
+        cinfo->entropy->huff_encode_one_block_simd =
+          jsimd_huff_encode_one_block_zbb_rvv;
+      }
+      return JSIMD_RVV;
     }
-    return JSIMD_RVV;
-  } else if ((cinfo->master->simd_support & JSIMD_RVV) &&
-      cinfo->master->simd_huffman) {
-    if (cinfo->master->simd_support & JSIMD_RVV256) {
-      cinfo->entropy->huff_encode_one_block_simd =
-        jsimd_huff_encode_one_block_zbb_256_rvv;
-    } else {
-      cinfo->entropy->huff_encode_one_block_simd =
-        jsimd_huff_encode_one_block_zbb_rvv;
-    }
-    return JSIMD_RVV;
   }
 #endif
 #endif
