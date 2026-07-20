@@ -38,7 +38,7 @@
 
 
 #ifndef HUFFMAN_ENCODER_256_RVV
-#define HUFFMAN_ENCODER_256_RVV jsimd_huff_encode_one_block_zbb_256_rvv
+#define HUFFMAN_ENCODER_256_RVV jsimd_huff_encode_one_block_zbb_rvv_vlen256
 #endif
 
 #define VEC_LEN     (DCTSIZE * 4)

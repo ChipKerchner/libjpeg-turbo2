@@ -497,7 +497,9 @@ EXTERN(void) jsimd_fdct_islow_altivec(DCTELEM *data);
 EXTERN(void) jsimd_fdct_ifast_altivec(DCTELEM *data);
 
 EXTERN(void) jsimd_fdct_islow_rvv(DCTELEM *data);
+EXTERN(void) jsimd_fdct_islow_rvv_vlen256(DCTELEM *data);
 EXTERN(void) jsimd_fdct_ifast_rvv(DCTELEM *data);
+EXTERN(void) jsimd_fdct_ifast_rvv_vlen256(DCTELEM *data);
 
 EXTERN(void) jsimd_fdct_islow_mmi(DCTELEM *data);
 EXTERN(void) jsimd_fdct_ifast_mmi(DCTELEM *data);
@@ -600,7 +602,13 @@ EXTERN(void) jsimd_idct_ifast_altivec
 EXTERN(void) jsimd_idct_islow_rvv
   (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
    JDIMENSION output_col);
+EXTERN(void) jsimd_idct_islow_rvv_vlen256
+  (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
+   JDIMENSION output_col);
 EXTERN(void) jsimd_idct_ifast_rvv
+  (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
+   JDIMENSION output_col);
+EXTERN(void) jsimd_idct_ifast_rvv_vlen256
   (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
    JDIMENSION output_col);
 
@@ -654,10 +662,10 @@ EXTERN(JOCTET *) jsimd_huff_encode_one_block_zbb_rvv
 EXTERN(JOCTET *) jsimd_huff_encode_one_block_zvbb_rvv
   (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
    void *actbl);
-EXTERN(JOCTET *) jsimd_huff_encode_one_block_zbb_256_rvv
+EXTERN(JOCTET *) jsimd_huff_encode_one_block_zbb_rvv_vlen256
   (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
    void *actbl);
-EXTERN(JOCTET *) jsimd_huff_encode_one_block_zvbb_256_rvv
+EXTERN(JOCTET *) jsimd_huff_encode_one_block_zvbb_rvv_vlen256
   (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val, void *dctbl,
    void *actbl);
 

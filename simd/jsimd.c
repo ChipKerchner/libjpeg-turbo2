@@ -980,7 +980,11 @@ jsimd_set_fdct_islow(j_compress_ptr cinfo, forward_DCT_method_ptr *method)
   }
 #elif SIMD_ARCHITECTURE == RISCV64
   if (cinfo->master->simd_support & JSIMD_RVV) {
-    *method = jsimd_fdct_islow_rvv;
+    if (cinfo->master->simd_support & JSIMD_RVV256) {
+      *method = jsimd_fdct_islow_rvv_vlen256;
+    } else {
+      *method = jsimd_fdct_islow_rvv;
+    }
     return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
@@ -1194,7 +1198,11 @@ jsimd_set_idct_islow(j_decompress_ptr cinfo)
   }
 #elif SIMD_ARCHITECTURE == RISCV64
   if (cinfo->master->simd_support & JSIMD_RVV) {
-    cinfo->idct->idct_simd = jsimd_idct_islow_rvv;
+    if (cinfo->master->simd_support & JSIMD_RVV256) {
+      cinfo->idct->idct_simd = jsimd_idct_islow_rvv_vlen256;
+    } else {
+      cinfo->idct->idct_simd = jsimd_idct_islow_rvv;
+    }
     return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
@@ -1465,7 +1473,7 @@ jsimd_set_huff_encode_one_block(j_compress_ptr cinfo)
     if (cinfo->master->simd_support & JSIMD_RVA23) {
       if (cinfo->master->simd_support & JSIMD_RVV256) {
         cinfo->entropy->huff_encode_one_block_simd =
-          jsimd_huff_encode_one_block_zvbb_256_rvv;
+          jsimd_huff_encode_one_block_zvbb_rvv_vlen256;
       } else {
         cinfo->entropy->huff_encode_one_block_simd =
           jsimd_huff_encode_one_block_zvbb_rvv;
@@ -1474,7 +1482,7 @@ jsimd_set_huff_encode_one_block(j_compress_ptr cinfo)
     } else if (cinfo->master->simd_support & JSIMD_RVVZBB) {
       if (cinfo->master->simd_support & JSIMD_RVV256) {
         cinfo->entropy->huff_encode_one_block_simd =
-          jsimd_huff_encode_one_block_zbb_256_rvv;
+          jsimd_huff_encode_one_block_zbb_rvv_vlen256;
       } else {
         cinfo->entropy->huff_encode_one_block_simd =
           jsimd_huff_encode_one_block_zbb_rvv;

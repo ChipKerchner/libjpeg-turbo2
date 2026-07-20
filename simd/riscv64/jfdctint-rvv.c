@@ -92,7 +92,8 @@
 }
 
 
-static void jsimd_fdct_islow_rvv_vlen256(DCTELEM *data)
+HIDDEN void
+jsimd_fdct_islow_rvv_vlen256(DCTELEM *data)
 {
   vint16mf2x4_t col0123, col4567;
   vint16mf2_t row0, row1, row2, row3, row4, row5, row6, row7,
@@ -239,11 +240,6 @@ jsimd_fdct_islow_rvv(DCTELEM *data)
   vint32m2_t z1_32, z2_32, z3_32, z4_32, z5_32,
     out1_32, out2_32, out3_32, out5_32, out6_32, out7_32;
   size_t vl, col_stride = DCTSIZE * sizeof(DCTELEM);
-
-  if (__riscv_vsetvlmax_e16m1() >= DCTSIZE * 2) {
-    jsimd_fdct_islow_rvv_vlen256(data);
-    return;
-  }
 
   /* The minimum register width (VLEN) for standard CPUs in RVV 1.0 is
    * 128 bits.  Thus, this should always be 8.

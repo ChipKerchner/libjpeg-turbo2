@@ -126,9 +126,10 @@
 }
 
 
-static void jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
-                                         JSAMPARRAY output_buf,
-                                         JDIMENSION output_col)
+HIDDEN void
+jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
+                             JSAMPARRAY output_buf,
+                             JDIMENSION output_col)
 {
   ISLOW_MULT_TYPE *quantptr = dct_table;
 
@@ -334,12 +335,6 @@ jsimd_idct_islow_rvv(void *dct_table, JCOEFPTR coef_block,
     z1, z2, z3, z4, z5,
     out0_32, out1_32, out2_32, out3_32, out4_32, out5_32, out6_32, out7_32;
   size_t vl;
-
-  if (__riscv_vsetvlmax_e16m1() >= DCTSIZE * 2) {
-    jsimd_idct_islow_rvv_vlen256(dct_table, coef_block, output_buf,
-                                 output_col);
-    return;
-  }
 
   /* The minimum register width (VLEN) for standard CPUs in RVV 1.0 is
    * 128 bits.  Thus, this should always be 8.
