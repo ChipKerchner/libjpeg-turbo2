@@ -65,23 +65,37 @@ static const uint8_t jsimd_huff_encode_one_block_consts[] = {
 /* Creates a vector of out = 16 - ctz(abs(in)) */
 #ifdef __riscv_zvbb
 #define VEC_CLZ(in, out, mask, zero, shift) \
-  { \
-    mask = __riscv_vmslt_vx_i16m2_b8(in, 0, VEC_LEN); \
-    shift = __riscv_vclz_v_u16m2(__riscv_vreinterpret_v_i16m2_u16m2( \
-      __riscv_vneg_v_i16m2_mu(mask, in, in, VEC_LEN)), VEC_LEN); \
-    out = __riscv_vrsub_vx_u16m2(shift, 16, VEC_LEN); \
-  }
+  vuint16m2_t shift = __riscv_vclz_v_u16m2( \
+      __riscv_vreinterpret_v_i16m2_u16m2(__riscv_vneg_v_i16m2_mu( \
+      mask, in, in, VEC_LEN)), VEC_LEN); \
+  vuint16m2_t out = __riscv_vrsub_vx_u16m2(shift, 16, VEC_LEN);
 #else
 #define VEC_CLZ(in, out, mask, zero, shift) \
-  { \
-    mask = __riscv_vmslt_vx_i16m2_b8(in, 0, VEC_LEN); \
-    out = __riscv_vnsrl_wx_u16m2(__riscv_vreinterpret_v_f32m4_u32m4( \
-      __riscv_vfwcvt_f_x_v_f32m4(__riscv_vneg_v_i16m2_mu(mask, in, in, \
-      VEC_LEN), VEC_LEN)), FLT_MANT_DIG - 1, VEC_LEN); \
-    out = __riscv_vsub_vx_u16m2_mu(zero, out, out, CNT_BIAS, VEC_LEN); \
-    shift = __riscv_vrsub_vx_u16m2(out, 16, VEC_LEN); \
-  }
+  vuint16m2_t out = __riscv_vnsrl_wx_u16m2( \
+      __riscv_vreinterpret_v_f32m4_u32m4(__riscv_vfwcvt_f_x_v_f32m4( \
+      __riscv_vneg_v_i16m2_mu(mask, in, in, VEC_LEN), VEC_LEN)), \
+      FLT_MANT_DIG - 1, VEC_LEN); \
+  out = __riscv_vsub_vx_u16m2_mu(zero, out, out, CNT_BIAS, VEC_LEN); \
+  vuint16m2_t shift = __riscv_vrsub_vx_u16m2(out, 16, VEC_LEN);
 #endif
+
+#define VEC_CLZ_MASK(in, out, mask, zero, shift, nbits, diff, loc) \
+  vbool8_t mask = __riscv_vmslt_vx_i16m2_b8(in, 0, VEC_LEN); \
+  VEC_CLZ(in, out, mask, zero, shift) \
+  in = __riscv_vsub_vx_i16m2_mu(mask, in, in, 1, VEC_LEN); \
+  in = __riscv_vsll_vv_i16m2(in, shift, VEC_LEN); \
+  in = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsrl_vv_u16m2( \
+         __riscv_vreinterpret_v_i16m2_u16m2(in), shift, VEC_LEN)); \
+  __riscv_vse16_v_u16m2(nbits + (VEC_LEN * loc), out, VEC_LEN); \
+  __riscv_vse16_v_i16m2((int16_t *)(diff) + (VEC_LEN * loc), in, VEC_LEN);
+
+#define VEC_ABS_MASK(in, out, mask, abs, diff, loc) \
+  vbool8_t mask = __riscv_vmslt_vx_i16m2_b8(in, 0, VEC_LEN); \
+  vint16m2_t out = __riscv_vneg_v_i16m2_mu(mask, in, in, VEC_LEN); \
+  in = __riscv_vsub_vx_i16m2_mu(mask, in, in, 1, VEC_LEN); \
+  __riscv_vse16_v_i16m2((int16_t *)(abs) + (VEC_LEN * loc), out, VEC_LEN); \
+  __riscv_vse16_v_i16m2((int16_t *)(diff) + (VEC_LEN * loc), in, VEC_LEN);
+
 
 HIDDEN JOCTET *
 HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
@@ -161,21 +175,21 @@ HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
   /* Encode DC coefficient. */
 
   /* Compute DC coefficient difference value (F.1.1.5.1). */
-  int64_t diff = block[0] - last_dc_val;
+  int32_t diff = block[0] - last_dc_val;
   /* For negative coeffs: diff = abs(coeff) - 1 = ~abs(coeff) */
-  int64_t mask = diff >> ((sizeof(uint64_t) * CHAR_BIT) - 1);
+  int32_t mask = diff >> ((sizeof(uint32_t) * CHAR_BIT) - 1);
   diff += mask;
-  int64_t abs_diff = diff ^ mask;
-  uint64_t lz = BUILTIN_CLZL(abs_diff);
-  uint64_t nbits = (sizeof(uint64_t) * CHAR_BIT) - lz;
-  diff = ((uint64_t)(diff) << lz) >> lz;
+  int32_t abs_diff = diff ^ mask;
+  uint32_t lz = BUILTIN_CLZ(abs_diff);
+  uint32_t nbits = (sizeof(uint32_t) * CHAR_BIT) - lz;
+  diff = ((uint32_t)(diff) << lz) >> lz;
   /* Emit Huffman-coded symbol and additional diff bits. */
   PUT_CODE(((c_derived_tbl *)dctbl)->ehufco[nbits],
            ((c_derived_tbl *)dctbl)->ehufsi[nbits], diff)
 
   /* Encode AC coefficients. */
 
-  uint64_t r = 0;  /* r = run length of zeros */
+  uint64_t r;      /* r = run length of zeros */
   uint64_t i = 1;  /* i = number of coefficients encoded */
   /* Code and size information for a run length of 16 zero coefficients */
   const unsigned int code_0xf0 = ((c_derived_tbl *)actbl)->ehufco[0xf0];
@@ -189,43 +203,22 @@ HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
    */
   if (non_zero_coefficients > 8) {
     uint16_t block_nbits[DCTSIZE2];
-    vuint16m2_t out0, out1, shift0, shift1;
-    vbool8_t mask0, mask1;
-
     /* Compute nbits needed to specify magnitude of each coefficient. */
-    VEC_CLZ(rows0, out0, mask0, rows_mask0, shift0)
-    VEC_CLZ(rows1, out1, mask1, rows_mask1, shift1)
-    /* Store nbits. */
-    __riscv_vse16_v_u16m2(block_nbits + (VEC_LEN * 0), out0, VEC_LEN);
-    __riscv_vse16_v_u16m2(block_nbits + (VEC_LEN * 1), out1, VEC_LEN);
-    /* Mask bits not required to specify sign and amplitude of diff. */
-    rows0 = __riscv_vsub_vx_i16m2_mu(mask0, rows0, rows0, 1, VEC_LEN);
-    rows1 = __riscv_vsub_vx_i16m2_mu(mask1, rows1, rows1, 1, VEC_LEN);
-    rows0 = __riscv_vsll_vv_i16m2(rows0, shift0, VEC_LEN);
-    rows1 = __riscv_vsll_vv_i16m2(rows1, shift1, VEC_LEN);
-    rows0 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsrl_vv_u16m2(
-       __riscv_vreinterpret_v_i16m2_u16m2(rows0), shift0, VEC_LEN));
-    rows1 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsrl_vv_u16m2(
-       __riscv_vreinterpret_v_i16m2_u16m2(rows1), shift1, VEC_LEN));
-    __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 0), rows0, VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 1), rows1, VEC_LEN);
+    VEC_CLZ_MASK(rows0, out0, mask0, rows_mask0, shift0, block_nbits,
+                 block_diff, 0)
+    if (bitmap1 != 0) {
+      VEC_CLZ_MASK(rows1, out1, mask1, rows_mask1, shift1, block_nbits,
+                   block_diff, 1)
+    }
 #if VEC_LEN == 16
-    vuint16m2_t out2, out3, shift2, shift3;
-    vbool8_t mask2, mask3;
-    VEC_CLZ(rows2, out2, mask2, rows_mask2, shift2)
-    VEC_CLZ(rows3, out3, mask3, rows_mask3, shift3)
-    __riscv_vse16_v_u16m2(block_nbits + (VEC_LEN * 2), out2, VEC_LEN);
-    __riscv_vse16_v_u16m2(block_nbits + (VEC_LEN * 3), out3, VEC_LEN);
-    rows2 = __riscv_vsub_vx_i16m2_mu(mask2, rows2, rows2, 1, VEC_LEN);
-    rows3 = __riscv_vsub_vx_i16m2_mu(mask3, rows3, rows3, 1, VEC_LEN);
-    rows2 = __riscv_vsll_vv_i16m2(rows2, shift2, VEC_LEN);
-    rows3 = __riscv_vsll_vv_i16m2(rows3, shift3, VEC_LEN);
-    rows2 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsrl_vv_u16m2(
-       __riscv_vreinterpret_v_i16m2_u16m2(rows2), shift2, VEC_LEN));
-    rows3 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsrl_vv_u16m2(
-       __riscv_vreinterpret_v_i16m2_u16m2(rows3), shift3, VEC_LEN));
-    __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 2), rows2, VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 3), rows3, VEC_LEN);
+    if (bitmap2 != 0) {
+      VEC_CLZ_MASK(rows2, out2, mask2, rows_mask2, shift2, block_nbits,
+                   block_diff, 2)
+    }
+    if (bitmap3 != 0) {
+      VEC_CLZ_MASK(rows3, out3, mask3, rows_mask3, shift3, block_nbits,
+                   block_diff, 3)
+    }
 #endif
 
     while (bitmap != 0) {
@@ -245,43 +238,14 @@ HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
                ((c_derived_tbl *)actbl)->ehufsi[rs], diff)
       i++;
     }
-  } else if (bitmap != 0) {
+  } else if (non_zero_coefficients != 0) {
     uint16_t block_abs[DCTSIZE2];
     /* Compute and store absolute value of coefficients. */
-    vbool8_t mask0 = __riscv_vmslt_vx_i16m2_b8(rows0, 0, VEC_LEN);
-    vbool8_t mask1 = __riscv_vmslt_vx_i16m2_b8(rows1, 0, VEC_LEN);
-    vint16m2_t abs_rows0 = __riscv_vneg_v_i16m2_mu(mask0, rows0, rows0,
-      VEC_LEN);
-    vint16m2_t abs_rows1 = __riscv_vneg_v_i16m2_mu(mask1, rows1, rows1,
-      VEC_LEN);
-    /* Compute diff bits (without nbits mask) and store. */
-    rows0 = __riscv_vsub_vx_i16m2_mu(mask0, rows0, rows0, 1, VEC_LEN);
-    rows1 = __riscv_vsub_vx_i16m2_mu(mask1, rows1, rows1, 1, VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_abs) + (VEC_LEN * 0), abs_rows0,
-      VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_abs) + (VEC_LEN * 1), abs_rows1,
-      VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 0), rows0,
-      VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 1), rows1,
-      VEC_LEN);
+    VEC_ABS_MASK(rows0, abs_rows0, mask0, block_abs, block_diff, 0)
+    VEC_ABS_MASK(rows1, abs_rows1, mask1, block_abs, block_diff, 1)
 #if VEC_LEN == 16
-    vbool8_t mask2 = __riscv_vmslt_vx_i16m2_b8(rows2, 0, VEC_LEN);
-    vbool8_t mask3 = __riscv_vmslt_vx_i16m2_b8(rows3, 0, VEC_LEN);
-    vint16m2_t abs_rows2 = __riscv_vneg_v_i16m2_mu(mask2, rows2, rows2,
-      VEC_LEN);
-    vint16m2_t abs_rows3 = __riscv_vneg_v_i16m2_mu(mask3, rows3, rows3,
-      VEC_LEN);
-    rows2 = __riscv_vsub_vx_i16m2_mu(mask2, rows2, rows2, 1, VEC_LEN);
-    rows3 = __riscv_vsub_vx_i16m2_mu(mask3, rows3, rows3, 1, VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_abs) + (VEC_LEN * 2), abs_rows2,
-      VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_abs) + (VEC_LEN * 3), abs_rows3,
-      VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 2), rows2,
-      VEC_LEN);
-    __riscv_vse16_v_i16m2((int16_t *)(block_diff) + (VEC_LEN * 3), rows3,
-      VEC_LEN);
+    VEC_ABS_MASK(rows2, abs_rows2, mask2, block_abs, block_diff, 2)
+    VEC_ABS_MASK(rows3, abs_rows3, mask3, block_abs, block_diff, 3)
 #endif
 
     /* Same as above but must mask diff bits and compute nbits on demand. */
@@ -289,9 +253,9 @@ HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
       r = BUILTIN_CTZL(bitmap);
       i += r;
       bitmap >>= (r + 1);
-      lz = BUILTIN_CLZL((uint64_t)(block_abs[i]));
-      nbits = (sizeof(uint64_t) * CHAR_BIT) - lz;
-      diff = ((uint64_t)(block_diff[i]) << lz) >> lz;
+      lz = BUILTIN_CLZ((uint32_t)(block_abs[i]));
+      nbits = (sizeof(uint32_t) * CHAR_BIT) - lz;
+      diff = ((uint32_t)(block_diff[i]) << lz) >> lz;
       while (r >= 16) {
         /* If run length >= 16, emit special run-length-16 codes. */
         PUT_BITS(code_0xf0, size_0xf0)

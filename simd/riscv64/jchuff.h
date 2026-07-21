@@ -14,11 +14,13 @@
 #if defined(_MSC_VER) && !defined(__clang__)
 #define BUILTIN_CLZL(x)     _CountLeadingZeros64(x)
 #define BUILTIN_CTZL(x)     _CountTrailingZeros64(x)
+#define BUILTIN_CLZ(x)      _CountLeadingZeros(x)
 #define BUILTIN_BSWAP64(x)  _byteswap_uint64(x)
 #define BUILTIN_POPCNTL(x)  _CountOneBits64(x)
 #elif defined(__clang__) || defined(__GNUC__)
 #define BUILTIN_CLZL(x)     __builtin_clzl(x)
 #define BUILTIN_CTZL(x)     __builtin_ctzl(x)
+#define BUILTIN_CLZ(x)      __builtin_clz(x)
 #define BUILTIN_BSWAP64(x)  __builtin_bswap64(x)
 #define BUILTIN_POPCNTL(x)  __builtin_popcountl(x)
 #else
