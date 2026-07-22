@@ -55,8 +55,17 @@ static const uint8_t jsimd_huff_encode_one_block_consts[] = {
   116, 118, 104,  90,  76,  62,  78,  92,
   106, 120, 122, 108,  94, 110, 124, 126
 };
+
+#define VEC_ABS_MASK(in, out, mask, abs, diff, loc) \
+  vbool8_t mask = __riscv_vmslt_vx_i16m2_b8(in, 0, VEC_LEN); \
+  vint16m2_t out = __riscv_vneg_v_i16m2_mu(mask, in, in, VEC_LEN); \
+  in = __riscv_vsub_vx_i16m2_mu(mask, in, in, 1, VEC_LEN); \
+  __riscv_vse16_v_i16m2((int16_t *)(abs) + (VEC_LEN * loc), out, VEC_LEN); \
+  __riscv_vse16_v_i16m2((int16_t *)(diff) + (VEC_LEN * loc), in, VEC_LEN);
+
 #else
 #undef VEC_CLZ
+#undef VEC_CLZ_MASK
 #undef VEC_LEN
 
 #define VEC_LEN     (DCTSIZE * 2)
@@ -87,13 +96,6 @@ static const uint8_t jsimd_huff_encode_one_block_consts[] = {
   in = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsrl_vv_u16m2( \
          __riscv_vreinterpret_v_i16m2_u16m2(in), shift, VEC_LEN)); \
   __riscv_vse16_v_u16m2(nbits + (VEC_LEN * loc), out, VEC_LEN); \
-  __riscv_vse16_v_i16m2((int16_t *)(diff) + (VEC_LEN * loc), in, VEC_LEN);
-
-#define VEC_ABS_MASK(in, out, mask, abs, diff, loc) \
-  vbool8_t mask = __riscv_vmslt_vx_i16m2_b8(in, 0, VEC_LEN); \
-  vint16m2_t out = __riscv_vneg_v_i16m2_mu(mask, in, in, VEC_LEN); \
-  in = __riscv_vsub_vx_i16m2_mu(mask, in, in, 1, VEC_LEN); \
-  __riscv_vse16_v_i16m2((int16_t *)(abs) + (VEC_LEN * loc), out, VEC_LEN); \
   __riscv_vse16_v_i16m2((int16_t *)(diff) + (VEC_LEN * loc), in, VEC_LEN);
 
 
@@ -196,12 +198,12 @@ HUFFMAN_ENCODER_RVV(void *state, JOCTET *buffer, JCOEFPTR block,
   const unsigned int size_0xf0 = ((c_derived_tbl *)actbl)->ehufsi[0xf0];
 
   /* The most efficient method of computing nbits and diff depends on the
-   * number of non-zero coefficients.  If the bitmap is not too sparse (> 8
+   * number of non-zero coefficients.  If the bitmap is not too sparse (> 4
    * non-zero AC coefficients), it is beneficial to do all of the work using
    * RVV else we do some of the work using RVV and the rest on demand using
    * scalar code.
    */
-  if (non_zero_coefficients > 8) {
+  if (non_zero_coefficients > 4) {
     uint16_t block_nbits[DCTSIZE2];
     /* Compute nbits needed to specify magnitude of each coefficient. */
     VEC_CLZ_MASK(rows0, out0, mask0, rows_mask0, shift0, block_nbits,
