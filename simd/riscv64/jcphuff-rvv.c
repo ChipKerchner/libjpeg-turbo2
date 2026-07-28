@@ -229,7 +229,8 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
 
     /* Compute and store data for signbits bitmap. */
     vint8m1_t sign_coefs = __riscv_vnsra_wx_i8m1(coefs, 15, 16);
-    __riscv_vse8_v_i8m1(coef_sign_bits_ptr, sign_coefs, 16);
+    __riscv_vse8_v_u8m1(coef_sign_bits_ptr,
+      __riscv_vreinterpret_v_i8m1_u8m1(sign_coefs), 16);
 
     /* Compute absolute value of coefficients and apply point transform Al. */
     vbool8_t mask = __riscv_vmslt_vx_i16m2_b8(coefs, 0, 16);
@@ -247,7 +248,8 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
 
     /* Compute and store data for signbits bitmap. */
     vint8mf2_t sign_coefs = __riscv_vnsra_wx_i8mf2(coefs, 15, 16);
-    __riscv_vse8_v_i8mf2(coef_sign_bits_ptr, sign_coefs, 16);
+    __riscv_vse8_v_u8mf2(coef_sign_bits_ptr,
+      __riscv_vreinterpret_v_i8mf2_u8mf2(sign_coefs), 16);
 
     /* Compute absolute value of coefficients and apply point transform Al. */
     vbool16_t mask = __riscv_vmslt_vx_i16m1_b16(coefs, 0, 16);
@@ -278,7 +280,8 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
 
     /* Compute and store data for signbits bitmap. */
     vint8m1_t sign_coefs = __riscv_vnsra_wx_i8m1(coefs, 15, 16);
-    __riscv_vse8_v_i8m1(coef_sign_bits_ptr, sign_coefs, 16);
+    __riscv_vse8_v_u8m1(coef_sign_bits_ptr,
+      __riscv_vreinterpret_v_i8m1_u8m1(sign_coefs), 16);
 
     /* Compute absolute value of coefficients and apply point transform Al. */
     vbool8_t mask = __riscv_vmslt_vx_i16m2_b8(coefs, 0, 16);
@@ -298,7 +301,8 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
 
     /* Compute and store data for signbits bitmap. */
     vint8mf2_t sign_coefs = __riscv_vnsra_wx_i8mf2(coefs, 15, 16);
-    __riscv_vse8_v_i8mf2(coef_sign_bits_ptr, sign_coefs, 16);
+    __riscv_vse8_v_u8mf2(coef_sign_bits_ptr,
+      __riscv_vreinterpret_v_i8mf2_u8mf2(sign_coefs), 16);
 
     /* Compute absolute value of coefficients and apply point transform Al. */
     vbool16_t mask = __riscv_vmslt_vx_i16m1_b16(coefs, 0, 16);
