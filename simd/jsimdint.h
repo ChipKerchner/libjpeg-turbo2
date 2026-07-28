@@ -685,3 +685,16 @@ EXTERN(void) jsimd_encode_mcu_AC_first_prepare_neon
 EXTERN(int) jsimd_encode_mcu_AC_refine_prepare_neon
   (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
    UJCOEF *absvalues, size_t *bits);
+
+EXTERN(void) jsimd_encode_mcu_AC_first_prepare_rvv
+  (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
+   UJCOEF *values, size_t *zerobits);
+EXTERN(void) jsimd_encode_mcu_AC_first_prepare_rvv_vlen256
+  (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
+   UJCOEF *values, size_t *zerobits);
+EXTERN(int) jsimd_encode_mcu_AC_refine_prepare_rvv
+  (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
+   UJCOEF *absvalues, size_t *bits);
+EXTERN(int) jsimd_encode_mcu_AC_refine_prepare_rvv_vlen256
+  (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
+   UJCOEF *absvalues, size_t *bits);

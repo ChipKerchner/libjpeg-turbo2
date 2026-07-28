@@ -516,7 +516,7 @@ else()
     COMPILE_FLAGS ${RISCV_FLAGS})
 endif()
 
-set(SIMD_ZBB_SOURCES riscv64/jchuff-zbb-rvv.c)
+set(SIMD_ZBB_SOURCES riscv64/jchuff-zbb-rvv.c riscv64/jcphuff-zbb-rvv.c)
 
 if (HAVE_RVV_ZBB)
   set_source_files_properties(${SIMD_ZBB_SOURCES} PROPERTIES
