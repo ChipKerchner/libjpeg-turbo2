@@ -33,6 +33,8 @@
 #include <riscv_vector.h>
 #include "jchuff.h"
 
+#include <limits.h>
+
 
 #ifndef HUFFMAN_ENCODER_MCU_FIRST_256_RVV
 #define HUFFMAN_ENCODER_MCU_FIRST_256_RVV  jsimd_encode_mcu_AC_first_prepare_rvv_vlen256
@@ -212,7 +214,7 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
 #ifdef __riscv_zbb
   /* Temporary storage buffers for data used to compute the signbits bitmap
    */
-  uint8_t coef_sign_bits[DCTSIZE2];
+  uint8_t coef_sign_bits[DCTSIZE2 / CHAR_BIT];
 
   UJCOEF *absvalues_ptr = absvalues;
   uint8_t *coef_sign_bits_ptr = coef_sign_bits;
@@ -227,42 +229,34 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
     off = __riscv_vsll_vx_u32m4(off, 1, 16);
     vint16m2_t coefs = __riscv_vluxei32_v_i16m2(block, off, 16);
 
-    /* Compute and store data for signbits bitmap. */
-    vint8m1_t sign_coefs = __riscv_vnsra_wx_i8m1(coefs, 15, 16);
-    __riscv_vse8_v_u8m1(coef_sign_bits_ptr,
-      __riscv_vreinterpret_v_i8m1_u8m1(sign_coefs), 16);
-
     /* Compute absolute value of coefficients and apply point transform Al. */
     vbool8_t mask = __riscv_vmslt_vx_i16m2_b8(coefs, 0, 16);
     coefs = __riscv_vneg_v_i16m2_mu(mask, coefs, coefs, 16);
     coefs = __riscv_vsra_vx_i16m2(coefs, Al, 16);
 
-    /* Store transformed coefficients and diff values. */
+    /* Store transformed coefficients and signbits values. */
     __riscv_vse16_v_u16m2(absvalues_ptr,
       __riscv_vreinterpret_v_i16m2_u16m2(coefs), 16);
+    __riscv_vsm_v_b8(coef_sign_bits_ptr, mask, 16);
 #else
     vuint32m2_t off = __riscv_vle32_v_u32m2(
       (uint32_t *)(jpeg_natural_order_start), 16);
     off = __riscv_vsll_vx_u32m2(off, 1, 16);
     vint16m1_t coefs = __riscv_vluxei32_v_i16m1(block, off, 16);
 
-    /* Compute and store data for signbits bitmap. */
-    vint8mf2_t sign_coefs = __riscv_vnsra_wx_i8mf2(coefs, 15, 16);
-    __riscv_vse8_v_u8mf2(coef_sign_bits_ptr,
-      __riscv_vreinterpret_v_i8mf2_u8mf2(sign_coefs), 16);
-
     /* Compute absolute value of coefficients and apply point transform Al. */
     vbool16_t mask = __riscv_vmslt_vx_i16m1_b16(coefs, 0, 16);
     coefs = __riscv_vneg_v_i16m1_mu(mask, coefs, coefs, 16);
     coefs = __riscv_vsra_vx_i16m1(coefs, Al, 16);
 
-    /* Store transformed coefficients and diff values. */
+    /* Store transformed coefficients and signbits values. */
     __riscv_vse16_v_u16m1(absvalues_ptr,
       __riscv_vreinterpret_v_i16m1_u16m1(coefs), 16);
+    __riscv_vsm_v_b16(coef_sign_bits_ptr, mask, 16);
 #endif
 
     absvalues_ptr += 16;
-    coef_sign_bits_ptr += 16;
+    coef_sign_bits_ptr += (16 / CHAR_BIT);
     jpeg_natural_order_start += 16;
     rows_to_zero -= 2;
   }
@@ -278,19 +272,15 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
     vint16m2_t coefs = __riscv_vluxei32_v_i16m2_tu(zero, block, off,
                                                    remaining_coefs);
 
-    /* Compute and store data for signbits bitmap. */
-    vint8m1_t sign_coefs = __riscv_vnsra_wx_i8m1(coefs, 15, 16);
-    __riscv_vse8_v_u8m1(coef_sign_bits_ptr,
-      __riscv_vreinterpret_v_i8m1_u8m1(sign_coefs), 16);
-
     /* Compute absolute value of coefficients and apply point transform Al. */
     vbool8_t mask = __riscv_vmslt_vx_i16m2_b8(coefs, 0, 16);
     coefs = __riscv_vneg_v_i16m2_mu(mask, coefs, coefs, 16);
     coefs = __riscv_vsra_vx_i16m2(coefs, Al, 16);
 
-    /* Store transformed coefficients and diff values. */
+    /* Store transformed coefficients and signbits values. */
     __riscv_vse16_v_u16m2(absvalues_ptr,
       __riscv_vreinterpret_v_i16m2_u16m2(coefs), 16);
+    __riscv_vsm_v_b8(coef_sign_bits_ptr, mask, 16);
 #else
     vuint32m2_t off = __riscv_vle32_v_u32m2(
       (uint32_t *)(jpeg_natural_order_start), remaining_coefs);
@@ -299,24 +289,19 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
     vint16m1_t coefs = __riscv_vluxei32_v_i16m1_tu(zero, block, off,
                                                    remaining_coefs);
 
-    /* Compute and store data for signbits bitmap. */
-    vint8mf2_t sign_coefs = __riscv_vnsra_wx_i8mf2(coefs, 15, 16);
-    __riscv_vse8_v_u8mf2(coef_sign_bits_ptr,
-      __riscv_vreinterpret_v_i8mf2_u8mf2(sign_coefs), 16);
-
     /* Compute absolute value of coefficients and apply point transform Al. */
     vbool16_t mask = __riscv_vmslt_vx_i16m1_b16(coefs, 0, 16);
     coefs = __riscv_vneg_v_i16m1_mu(mask, coefs, coefs, 16);
     coefs = __riscv_vsra_vx_i16m1(coefs, Al, 16);
 
-    /* Store transformed coefficients and diff values. */
+    /* Store transformed coefficients and signbits values. */
     __riscv_vse16_v_u16m1(absvalues_ptr,
       __riscv_vreinterpret_v_i16m1_u16m1(coefs), 16);
+    __riscv_vsm_v_b16(coef_sign_bits_ptr, mask, 16);
 #endif
 
     absvalues_ptr += 16;
-    coef_sign_bits_ptr += 16;
-    jpeg_natural_order_start += 16;
+    coef_sign_bits_ptr += (16 / CHAR_BIT);
     rows_to_zero -= 2;
   }
 
@@ -326,20 +311,18 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
 #ifndef USE_HUFFMAN_ENCODER_MCU_RVV_256
     vuint16m8_t zero = __riscv_vmv_v_x_u16m8(0, rows_to_zero);
     __riscv_vse16_v_u16m8(absvalues_ptr, zero, rows_to_zero);
-    __riscv_vse8_v_u8m4(coef_sign_bits_ptr,
-      __riscv_vlmul_trunc_v_u8m8_u8m4(__riscv_vreinterpret_v_u16m8_u8m8(zero)),
+    __riscv_vsm_v_b4(coef_sign_bits_ptr, __riscv_vmclr_m_b4(rows_to_zero),
       rows_to_zero);
 #else
     vuint16m4_t zero = __riscv_vmv_v_x_u16m4(0, rows_to_zero);
     __riscv_vse16_v_u16m4(absvalues_ptr, zero, rows_to_zero);
-    __riscv_vse8_v_u8m2(coef_sign_bits_ptr,
-      __riscv_vlmul_trunc_v_u8m4_u8m2(__riscv_vreinterpret_v_u16m4_u8m4(zero)),
+    __riscv_vsm_v_b8(coef_sign_bits_ptr, __riscv_vmclr_m_b8(rows_to_zero),
       rows_to_zero);
 #endif
   }
 
   /* Construct zerobits bitmap. */
-#if DCTSIZE2 == 16
+#ifndef USE_HUFFMAN_ENCODER_MCU_RVV_256
   vuint16m8_t abs_vals = __riscv_vle16_v_u16m8(absvalues, DCTSIZE2);
   vbool2_t bit_mask = __riscv_vmsne_vx_u16m8_b2(abs_vals, 0, DCTSIZE2);
   /* Move bitmap to a 64-bit scalar register. */
@@ -357,18 +340,14 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
   bits[0] = bitmap;
 
   /* Construct signbits bitmap. */
-#if DCTSIZE2 == 16
-  bit_mask = __riscv_vmsne_vx_u8m4_b2(__riscv_vle8_v_u8m4(coef_sign_bits,
-    DCTSIZE2), 0, DCTSIZE2);
+#ifndef USE_HUFFMAN_ENCODER_MCU_RVV_256
   /* Move bitmap to a 64-bit scalar register. */
-  bitmap = __riscv_vmv_x_s_u64m1_u64(
-    __riscv_vreinterpret_v_b2_u64m1(bit_mask));
+  bitmap = __riscv_vmv_x_s_u64m1_u64(__riscv_vreinterpret_v_b4_u64m1(
+              __riscv_vlm_v_b4(coef_sign_bits, DCTSIZE2)));
 #else
-  bit_mask = __riscv_vmsne_vx_u8m2_b4(__riscv_vle8_v_u8m2(coef_sign_bits,
-    DCTSIZE2), 0, DCTSIZE2);
   /* Move bitmap to a 64-bit scalar register. */
-  bitmap = __riscv_vmv_x_s_u64m1_u64(
-    __riscv_vreinterpret_v_b4_u64m1(bit_mask));
+  bitmap = __riscv_vmv_x_s_u64m1_u64(__riscv_vreinterpret_v_b8_u64m1(
+              __riscv_vlm_v_b8(coef_sign_bits, DCTSIZE2)));
 #endif
 
   /* Store zerobits bitmap. */
@@ -377,7 +356,7 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
   /* Construct bitmap to find EOB position (the index of the last coefficient
    * equal to 1.)
    */
-#if DCTSIZE2 == 16
+#ifndef USE_HUFFMAN_ENCODER_MCU_RVV_256
   bit_mask = __riscv_vmseq_vx_u16m8_b2(abs_vals, 1, DCTSIZE2);
   /* Move bitmap to a 64-bit scalar register. */
   bitmap = __riscv_vmv_x_s_u64m1_u64(
