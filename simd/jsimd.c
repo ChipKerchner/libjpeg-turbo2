@@ -1564,8 +1564,8 @@ jsimd_set_encode_mcu_AC_refine_prepare(j_compress_ptr cinfo,
       } else {
         *method = jsimd_encode_mcu_AC_refine_prepare_rvv;
       }
+      return JSIMD_RVV;
     }
-    return JSIMD_RVV;
   }
 #endif
 

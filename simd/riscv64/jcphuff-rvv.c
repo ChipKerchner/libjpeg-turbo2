@@ -338,6 +338,7 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
 
   /* Store zerobits bitmap. */
   bits[0] = bitmap;
+  if (bitmap == 0) return 0;
 
   /* Construct signbits bitmap. */
 #ifndef USE_HUFFMAN_ENCODER_MCU_RVV_256
@@ -375,6 +376,8 @@ HUFFMAN_ENCODER_MCU_REFINE_RVV(const JCOEF *block,
   } else {
     return 63 - BUILTIN_CLZL(bitmap);
   }
+#else
+  return 0;
 #endif
 }
 
