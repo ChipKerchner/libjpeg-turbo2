@@ -70,13 +70,11 @@ jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
       y = __riscv_vle8_v_u8m2(inptr0, vl);
       y16 = __riscv_vreinterpret_v_u16m4_i16m4(__riscv_vzext_vf2_u16m4(y, vl));
       cb = __riscv_vle8_v_u8m2(inptr1, vl);
-      cb16 =
-        __riscv_vreinterpret_v_u16m4_i16m4(__riscv_vzext_vf2_u16m4(cb, vl));
-      cb16 = __riscv_vsub_vx_i16m4(cb16, CENTERJSAMPLE, vl);
+      cb16 = __riscv_vreinterpret_v_u16m4_i16m4(__riscv_vwsubu_vx_u16m4(cb,
+        CENTERJSAMPLE, vl));
       cr = __riscv_vle8_v_u8m2(inptr2, vl);
-      cr16 =
-        __riscv_vreinterpret_v_u16m4_i16m4(__riscv_vzext_vf2_u16m4(cr, vl));
-      cr16 = __riscv_vsub_vx_i16m4(cr16, CENTERJSAMPLE, vl);
+      cr16 = __riscv_vreinterpret_v_u16m4_i16m4(__riscv_vwsubu_vx_u16m4(cr,
+        CENTERJSAMPLE, vl));
 
       /* (128 has already been subtracted from Cb and Cr.)
        *

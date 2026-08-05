@@ -900,7 +900,11 @@ jsimd_set_convsamp(j_compress_ptr cinfo, convsamp_method_ptr *method)
   }
 #elif SIMD_ARCHITECTURE == RISCV64
   if (cinfo->master->simd_support & JSIMD_RVV) {
-    *method = jsimd_convsamp_rvv;
+    if (cinfo->master->simd_support & JSIMD_RVV256) {
+      *method = jsimd_convsamp_rvv_vlen256;
+    } else {
+      *method = jsimd_convsamp_rvv;
+    }
     return JSIMD_RVV;
   }
 #endif

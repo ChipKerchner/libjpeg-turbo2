@@ -499,7 +499,8 @@ endif()
 set(SIMD_SOURCES riscv64/jccolor-rvv.c riscv64/jcgray-rvv.c
   riscv64/jcsample-rvv.c riscv64/jdcolor-rvv.c riscv64/jdmerge-rvv.c
   riscv64/jdsample-rvv.c riscv64/jfdctfst-rvv.c riscv64/jfdctint-rvv.c
-  riscv64/jidctfst-rvv.c riscv64/jidctint-rvv.c riscv64/jquanti-rvv.c)
+  riscv64/jidctfst-rvv.c riscv64/jidctint-rvv.c riscv64/jquanti-rvv.c
+  riscv64/jcnvsmp-rvv.c)
 
 enable_language(ASM)
 

@@ -81,23 +81,19 @@
   z5 = __riscv_vadd_vv_i32m1(z3, z4, vl); \
   z5 = __riscv_vmul_vx_i32m1(z5, F_1_175, vl); \
   \
-  tmp0 = __riscv_vwmul_vx_i32m1(in##7, F_0_298, vl); \
-  tmp1 = __riscv_vwmul_vx_i32m1(in##5, F_2_053, vl); \
-  tmp2 = __riscv_vwmul_vx_i32m1(in##3, F_3_072, vl); \
-  tmp3 = __riscv_vwmul_vx_i32m1(in##1, F_1_501, vl); \
   z1 = __riscv_vmul_vx_i32m1(z1, -F_0_899, vl); \
   z2 = __riscv_vmul_vx_i32m1(z2, -F_2_562, vl); \
+  tmp0 = __riscv_vwmacc_vx_i32m1(z1, F_0_298, in##7, vl); \
+  tmp1 = __riscv_vwmacc_vx_i32m1(z2, F_2_053, in##5, vl); \
+  tmp2 = __riscv_vwmacc_vx_i32m1(z2, F_3_072, in##3, vl); \
+  tmp3 = __riscv_vwmacc_vx_i32m1(z1, F_1_501, in##1, vl); \
   \
   z3 = __riscv_vmacc_vx_i32m1(z5, -F_1_961, z3, vl); \
   z4 = __riscv_vmacc_vx_i32m1(z5, -F_0_390, z4, vl); \
   \
-  tmp0 = __riscv_vadd_vv_i32m1(tmp0, z1, vl); \
   tmp0 = __riscv_vadd_vv_i32m1(tmp0, z3, vl); \
-  tmp1 = __riscv_vadd_vv_i32m1(tmp1, z2, vl); \
   tmp1 = __riscv_vadd_vv_i32m1(tmp1, z4, vl); \
-  tmp2 = __riscv_vadd_vv_i32m1(tmp2, z2, vl); \
   tmp2 = __riscv_vadd_vv_i32m1(tmp2, z3, vl); \
-  tmp3 = __riscv_vadd_vv_i32m1(tmp3, z1, vl); \
   tmp3 = __riscv_vadd_vv_i32m1(tmp3, z4, vl); \
   \
   out0_32 = __riscv_vadd_vv_i32m1(tmp10, tmp3, vl); \
@@ -275,23 +271,19 @@ jsimd_idct_islow_rvv_vlen256(void *dct_table, JCOEFPTR coef_block,
   z5 = __riscv_vadd_vv_i32m2(z3, z4, vl); \
   z5 = __riscv_vmul_vx_i32m2(z5, F_1_175, vl); \
   \
-  tmp0 = __riscv_vwmul_vx_i32m2(in##7, F_0_298, vl); \
-  tmp1 = __riscv_vwmul_vx_i32m2(in##5, F_2_053, vl); \
-  tmp2 = __riscv_vwmul_vx_i32m2(in##3, F_3_072, vl); \
-  tmp3 = __riscv_vwmul_vx_i32m2(in##1, F_1_501, vl); \
   z1 = __riscv_vmul_vx_i32m2(z1, -F_0_899, vl); \
   z2 = __riscv_vmul_vx_i32m2(z2, -F_2_562, vl); \
+  tmp0 = __riscv_vwmacc_vx_i32m2(z1, F_0_298, in##7, vl); \
+  tmp1 = __riscv_vwmacc_vx_i32m2(z2, F_2_053, in##5, vl); \
+  tmp2 = __riscv_vwmacc_vx_i32m2(z2, F_3_072, in##3, vl); \
+  tmp3 = __riscv_vwmacc_vx_i32m2(z1, F_1_501, in##1, vl); \
   \
   z3 = __riscv_vmacc_vx_i32m2(z5, -F_1_961, z3, vl); \
   z4 = __riscv_vmacc_vx_i32m2(z5, -F_0_390, z4, vl); \
   \
-  tmp0 = __riscv_vadd_vv_i32m2(tmp0, z1, vl); \
   tmp0 = __riscv_vadd_vv_i32m2(tmp0, z3, vl); \
-  tmp1 = __riscv_vadd_vv_i32m2(tmp1, z2, vl); \
   tmp1 = __riscv_vadd_vv_i32m2(tmp1, z4, vl); \
-  tmp2 = __riscv_vadd_vv_i32m2(tmp2, z2, vl); \
   tmp2 = __riscv_vadd_vv_i32m2(tmp2, z3, vl); \
-  tmp3 = __riscv_vadd_vv_i32m2(tmp3, z1, vl); \
   tmp3 = __riscv_vadd_vv_i32m2(tmp3, z4, vl); \
   \
   out0_32 = __riscv_vadd_vv_i32m2(tmp10, tmp3, vl); \

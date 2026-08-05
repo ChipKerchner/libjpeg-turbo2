@@ -1,11 +1,12 @@
 /*
- * Integer Sample Conversion and Quantization (64-bit RVV 1.0)
+ * Quantization (64-bit RVV 1.0)
  *
  * Copyright (C) 2022-2023, Institute of Software, Chinese Academy of Sciences.
  *                          Author:  Zhiyuan Tan
  * Copyright (C) 2025, Samsung Electronics Co., Ltd.
  *                     Author:  Filip Wasil
  * Copyright (C) 2026, D. R. Commander.
+ * Copyright (C) 2026, Chip Kerchner
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -26,57 +27,6 @@
 
 #include "../jsimdint.h"
 #include <riscv_vector.h>
-
-
-HIDDEN void
-jsimd_convsamp_rvv(JSAMPARRAY sample_data, JDIMENSION start_col,
-                   DCTELEM *workspace)
-{
-  /* The minimum register width (VLEN) for standard CPUs in RVV 1.0 is
-   * 128 bits.  Thus, this should always be 8, meaning that only one pass is
-   * required.
-   */
-  size_t vl = __riscv_vsetvl_e16m2(DCTSIZE);
-
-  vuint8m1_t in0, in1, in2, in3, in4, in5, in6, in7;
-  vint16m2_t row0, row1, row2, row3, row4, row5, row6, row7;
-
-  in0 = __riscv_vle8_v_u8m1(sample_data[0] + start_col, vl);
-  in1 = __riscv_vle8_v_u8m1(sample_data[1] + start_col, vl);
-  in2 = __riscv_vle8_v_u8m1(sample_data[2] + start_col, vl);
-  in3 = __riscv_vle8_v_u8m1(sample_data[3] + start_col, vl);
-  in4 = __riscv_vle8_v_u8m1(sample_data[4] + start_col, vl);
-  in5 = __riscv_vle8_v_u8m1(sample_data[5] + start_col, vl);
-  in6 = __riscv_vle8_v_u8m1(sample_data[6] + start_col, vl);
-  in7 = __riscv_vle8_v_u8m1(sample_data[7] + start_col, vl);
-
-  row0 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(in0, vl));
-  row1 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(in1, vl));
-  row2 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(in2, vl));
-  row3 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(in3, vl));
-  row4 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(in4, vl));
-  row5 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(in5, vl));
-  row6 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(in6, vl));
-  row7 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(in7, vl));
-
-  row0 = __riscv_vsub_vx_i16m2(row0, CENTERJSAMPLE, vl);
-  row1 = __riscv_vsub_vx_i16m2(row1, CENTERJSAMPLE, vl);
-  row2 = __riscv_vsub_vx_i16m2(row2, CENTERJSAMPLE, vl);
-  row3 = __riscv_vsub_vx_i16m2(row3, CENTERJSAMPLE, vl);
-  row4 = __riscv_vsub_vx_i16m2(row4, CENTERJSAMPLE, vl);
-  row5 = __riscv_vsub_vx_i16m2(row5, CENTERJSAMPLE, vl);
-  row6 = __riscv_vsub_vx_i16m2(row6, CENTERJSAMPLE, vl);
-  row7 = __riscv_vsub_vx_i16m2(row7, CENTERJSAMPLE, vl);
-
-  __riscv_vse16_v_i16m2(workspace + 0 * DCTSIZE, row0, vl);
-  __riscv_vse16_v_i16m2(workspace + 1 * DCTSIZE, row1, vl);
-  __riscv_vse16_v_i16m2(workspace + 2 * DCTSIZE, row2, vl);
-  __riscv_vse16_v_i16m2(workspace + 3 * DCTSIZE, row3, vl);
-  __riscv_vse16_v_i16m2(workspace + 4 * DCTSIZE, row4, vl);
-  __riscv_vse16_v_i16m2(workspace + 5 * DCTSIZE, row5, vl);
-  __riscv_vse16_v_i16m2(workspace + 6 * DCTSIZE, row6, vl);
-  __riscv_vse16_v_i16m2(workspace + 7 * DCTSIZE, row7, vl);
-}
 
 
 HIDDEN void

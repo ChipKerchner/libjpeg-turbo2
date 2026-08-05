@@ -82,13 +82,11 @@ jsimd_h2v1_merged_upsample_rvv(JDIMENSION output_width, JSAMPIMAGE input_buf,
      * register group.
      */
     cb = __riscv_vle8_v_u8m1(inptr1, vl);
-    cb16 =
-      __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(cb, vl));
-    cb16 = __riscv_vsub_vx_i16m2(cb16, CENTERJSAMPLE, vl);
+    cb16 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwsubu_vx_u16m2(cb,
+      CENTERJSAMPLE, vl));
     cr = __riscv_vle8_v_u8m1(inptr2, vl);
-    cr16 =
-      __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vzext_vf2_u16m2(cr, vl));
-    cr16 = __riscv_vsub_vx_i16m2(cr16, CENTERJSAMPLE, vl);
+    cr16 = __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vwsubu_vx_u16m2(cr,
+      CENTERJSAMPLE, vl));
 
     /* (128 has already been subtracted from Cb and Cr.)
      *

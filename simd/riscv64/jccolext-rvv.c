@@ -42,7 +42,7 @@ jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
 #endif
   vuint8m1_t r, g, b, y, cb, cr;
   vuint16m2_t r16, g16, b16, y16, cb16, cr16;
-  vuint32m4_t y32, cb32, cr32, tmp;
+  vuint32m4_t y32, cb32, cr32;
 
   while (--num_rows >= 0) {
     JDIMENSION cols_remaining = img_width;
@@ -109,10 +109,12 @@ jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
       cb32 = __riscv_vwmulu_vx_u32m4(b16, F_0_500, vl);
       cb32 = __riscv_vadd_vx_u32m4(cb32, SCALED_CENTERJSAMPLE + ONE_HALF - 1,
                                    vl);
-      tmp = __riscv_vwmulu_vx_u32m4(g16, F_0_331, vl);
-      cb32 = __riscv_vsub_vv_u32m4(cb32, tmp, vl);
-      tmp = __riscv_vwmulu_vx_u32m4(r16, F_0_168, vl);
-      cb32 = __riscv_vsub_vv_u32m4(cb32, tmp, vl);
+      cb32 = __riscv_vreinterpret_v_i32m4_u32m4(__riscv_vwmacc_vx_i32m4(
+        __riscv_vreinterpret_v_u32m4_i32m4(cb32),
+        -F_0_331, __riscv_vreinterpret_v_u16m2_i16m2(g16), vl));
+      cb32 = __riscv_vreinterpret_v_i32m4_u32m4(__riscv_vwmacc_vx_i32m4(
+        __riscv_vreinterpret_v_u32m4_i32m4(cb32),
+        -F_0_168, __riscv_vreinterpret_v_u16m2_i16m2(r16), vl));
       /* Narrow to 16-bit and round. */
       cb16 = __riscv_vnsrl_wx_u16m2(cb32, SCALEBITS, vl);
       /* Narrow to 8-bit and store to memory. */
@@ -122,10 +124,12 @@ jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
       cr32 = __riscv_vwmulu_vx_u32m4(r16, F_0_500, vl);
       cr32 = __riscv_vadd_vx_u32m4(cr32, SCALED_CENTERJSAMPLE + ONE_HALF - 1,
                                    vl);
-      tmp = __riscv_vwmulu_vx_u32m4(g16, F_0_418, vl);
-      cr32 = __riscv_vsub_vv_u32m4(cr32, tmp, vl);
-      tmp = __riscv_vwmulu_vx_u32m4(b16, F_0_081, vl);
-      cr32 = __riscv_vsub_vv_u32m4(cr32, tmp, vl);
+      cr32 = __riscv_vreinterpret_v_i32m4_u32m4(__riscv_vwmacc_vx_i32m4(
+        __riscv_vreinterpret_v_u32m4_i32m4(cr32),
+        -F_0_418, __riscv_vreinterpret_v_u16m2_i16m2(g16), vl));
+      cr32 = __riscv_vreinterpret_v_i32m4_u32m4(__riscv_vwmacc_vx_i32m4(
+        __riscv_vreinterpret_v_u32m4_i32m4(cr32),
+        -F_0_081, __riscv_vreinterpret_v_u16m2_i16m2(b16), vl));
       /* Narrow to 16-bit and round. */
       cr16 = __riscv_vnsrl_wx_u16m2(cr32, SCALEBITS, vl);
       /* Narrow to 8-bit and store to memory. */
