@@ -59,10 +59,9 @@ jsimd_quantize_rvv(JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace)
     temp = __riscv_vreinterpret_v_i16m4_u16m4(in);
 
     temp = __riscv_vadd_vv_u16m4(temp, corr, vl);
-    product = __riscv_vwmulu_vv_u32m8(temp, recip, vl);
-    shift = __riscv_vadd_vx_i16m4(shift, sizeof(DCTELEM) * 8, vl);
-    temp = __riscv_vreinterpret_v_i16m4_u16m4(shift);
-    temp = __riscv_vnsrl_wv_u16m4(product, temp, vl);
+    temp = __riscv_vmulhu_vv_u16m4(temp, recip, vl);
+    temp = __riscv_vsrl_vv_u16m4(temp,
+             __riscv_vreinterpret_v_i16m4_u16m4(shift), vl);
 
     out = __riscv_vreinterpret_v_u16m4_i16m4(temp);
     /* Restore sign to original product. */

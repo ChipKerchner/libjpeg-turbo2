@@ -106,9 +106,9 @@ jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
       y = __riscv_vncvt_x_x_w_u8m1(y16, vl);
       __riscv_vse8_v_u8m1(outptr0, y, vl);
 
-      cb32 = __riscv_vwmulu_vx_u32m4(b16, F_0_500, vl);
-      cb32 = __riscv_vadd_vx_u32m4(cb32, SCALED_CENTERJSAMPLE + ONE_HALF - 1,
-                                   vl);
+      cr32 = __riscv_vmv_v_x_u32m4(SCALED_CENTERJSAMPLE + ONE_HALF - 1, vl);
+
+      cb32 = __riscv_vwmaccu_vx_u32m4(cr32, F_0_500, b16, vl);
       cb32 = __riscv_vreinterpret_v_i32m4_u32m4(__riscv_vwmacc_vx_i32m4(
         __riscv_vreinterpret_v_u32m4_i32m4(cb32),
         -F_0_331, __riscv_vreinterpret_v_u16m2_i16m2(g16), vl));
@@ -121,9 +121,7 @@ jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
       cb = __riscv_vncvt_x_x_w_u8m1(cb16, vl);
       __riscv_vse8_v_u8m1(outptr1, cb, vl);
 
-      cr32 = __riscv_vwmulu_vx_u32m4(r16, F_0_500, vl);
-      cr32 = __riscv_vadd_vx_u32m4(cr32, SCALED_CENTERJSAMPLE + ONE_HALF - 1,
-                                   vl);
+      cr32 = __riscv_vwmaccu_vx_u32m4(cr32, F_0_500, r16, vl);
       cr32 = __riscv_vreinterpret_v_i32m4_u32m4(__riscv_vwmacc_vx_i32m4(
         __riscv_vreinterpret_v_u32m4_i32m4(cr32),
         -F_0_418, __riscv_vreinterpret_v_u16m2_i16m2(g16), vl));

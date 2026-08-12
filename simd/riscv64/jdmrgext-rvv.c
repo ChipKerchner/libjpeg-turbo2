@@ -102,11 +102,10 @@ jsimd_h2v1_merged_upsample_rvv(JDIMENSION output_width, JSAMPIMAGE input_buf,
      */
 
     /* R-Y */
-    r_y16 = __riscv_vsll_vx_i16m2(cr16, 1, vl);                    /* 2 * Cr */
-    r_y16 = __riscv_vmulh_vx_i16m2(r_y16, F_0_402, vl);
+    r_y16 = __riscv_vmulhsu_vx_i16m2(cr16, F_0_804, vl);
                                                       /* 2 * Cr * FIX(0.402) */
-    r_y16 = __riscv_vadd_vx_i16m2(r_y16, 1, vl);  /* 2 * Cr * FIX(0.402) + 1 */
-    r_y16 = __riscv_vsra_vx_i16m2(r_y16, 1, vl);          /* Cr * FIX(0.402) */
+    r_y16 = __riscv_vaadd_vx_i16m2(r_y16, 0, __RISCV_VXRM_RNU, vl);
+                                                          /* Cr * FIX(0.402) */
     r_y16 = __riscv_vadd_vv_i16m2(r_y16, cr16, vl);       /* Cr * FIX(1.402) */
     /* Add Y */
     re16 = __riscv_vadd_vv_i16m2(r_y16, ye16, vl);
@@ -131,9 +130,8 @@ jsimd_h2v1_merged_upsample_rvv(JDIMENSION output_width, JSAMPIMAGE input_buf,
     cb16_2 = __riscv_vsll_vx_i16m2(cb16, 1, vl);                   /* 2 * Cb */
     b_y16 = __riscv_vmulh_vx_i16m2(cb16_2, -F_0_228, vl);
                                                      /* 2 * Cb * -FIX(0.228) */
-    b_y16 = __riscv_vadd_vx_i16m2(b_y16, 1, vl);
-                                                 /* 2 * Cb * -FIX(0.228) + 1 */
-    b_y16 = __riscv_vsra_vx_i16m2(b_y16, 1, vl);         /* Cb * -FIX(0.228) */
+    b_y16 = __riscv_vaadd_vx_i16m2(b_y16, 0, __RISCV_VXRM_RNU, vl);
+                                                         /* Cb * -FIX(0.228) */
     b_y16 = __riscv_vadd_vv_i16m2(b_y16, cb16_2, vl);     /* Cb * FIX(1.772) */
     /* Add Y */
     be16 = __riscv_vadd_vv_i16m2(b_y16, ye16, vl);
